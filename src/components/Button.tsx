@@ -101,8 +101,8 @@ export function Button({
     </>
   );
 
-  const MotionButton = motion.button;
-  const MotionLink = motion(Link);
+  const MotionButton = motion.create('button');
+  const MotionLink = motion.create(Link);
 
   const buttonProps = {
     whileHover: { scale: 1.02 },
