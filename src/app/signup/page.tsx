@@ -14,6 +14,7 @@ import { Button } from '@/components/Button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
@@ -120,20 +121,18 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const res = await fetch('/api/auth/sign-up', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: formData.email, 
-          password: formData.password, 
-          name: formData.name 
-        }),
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email.trim(),
+        password: formData.password.trim(),
+        options: {
+          data: {
+            name: formData.name.trim(),
+          }
+        }
       });
       
-      const data = await res.json();
-      
-      if (!res.ok) {
-        setErrors({ submit: data.error || 'Sign Up failed' });
+      if (error) {
+        setErrors({ submit: error.message });
       } else {
         // Auto-login after successful signup and redirect to browse
         router.replace('/browse');

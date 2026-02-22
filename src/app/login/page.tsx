@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
@@ -53,19 +54,16 @@ function LoginForm() {
     }
 
     try {
-      const res = await fetch('/api/auth/sign-in', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
       });
       
-      const data = await res.json();
-      
-      if (!res.ok) {
-        setError(data.error || 'Sign in failed');
+      if (error) {
+        setError(error.message);
       } else {
         // Redirect to browse on successful login
-        router.push('/browse');
+        router.replace('/browse');
       }
     } catch (err: any) {
       // Handle any network/fetch errors that might come through
