@@ -14,6 +14,9 @@ import { Button } from '@/components/Button';
 import Link from 'next/link';
 import { auth } from '@/lib/auth-supabase';
 
+// Password validation constants
+const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
+
 /**
  * Form validation for .edu email addresses
  */
@@ -77,8 +80,8 @@ export default function SignUpPage() {
     // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+    } else if (formData.password.length < MIN_PASSWORD_LENGTH) {
+      newErrors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
     }
 
     // Confirm password validation
@@ -235,6 +238,16 @@ export default function SignUpPage() {
               {errors.password && (
                 <p id="password-error" className="mt-1 text-sm text-red-600" role="alert">
                   {errors.password}
+                </p>
+              )}
+              {formData.password && !errors.password && (
+                <p className="mt-1 text-sm text-green-600">
+                  Password looks good!
+                </p>
+              )}
+              {formData.password && formData.password.length < MIN_PASSWORD_LENGTH && !errors.password && (
+                <p className="mt-1 text-sm text-gray-500">
+                  Password must be at least {MIN_PASSWORD_LENGTH} characters
                 </p>
               )}
             </div>

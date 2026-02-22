@@ -14,6 +14,9 @@ import { ClientHeader } from '@/components/ClientHeader';
 import { Button } from '@/components/Button';
 import { auth } from '@/lib/auth-supabase';
 
+// Password validation constants
+const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
+
 function SearchParamsWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
 }
@@ -30,6 +33,13 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Client-side validation
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+      setLoading(false);
+      return;
+    }
 
     try {
       const user = await auth.signIn(email, password);
@@ -99,6 +109,18 @@ function LoginForm() {
           )}
         </button>
       </div>
+      
+      {/* Password feedback */}
+      {password && password.length < MIN_PASSWORD_LENGTH && (
+        <p className="mt-1 text-sm text-gray-500">
+          Password must be at least {MIN_PASSWORD_LENGTH} characters
+        </p>
+      )}
+      {password && password.length >= MIN_PASSWORD_LENGTH && (
+        <p className="mt-1 text-sm text-green-600">
+          Password looks good!
+        </p>
+      )}
 
       <Button
         type="submit"
