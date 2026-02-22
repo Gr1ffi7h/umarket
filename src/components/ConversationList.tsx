@@ -11,7 +11,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { supabase, Conversation } from '@/lib/supabase';
+import { auth } from '@/lib/auth';
+import { data, type Conversation } from '@/lib/data';
 
 interface ConversationListProps {
   userId: string;
@@ -22,34 +23,11 @@ export function ConversationList({ userId }: ConversationListProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchConversations();
-    
-    // Subscribe to real-time updates for conversations
-    let subscription: any = null;
-    if (supabase) {
-      subscription = supabase
-        .channel('conversations')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'conversations',
-            filter: `buyer_id=eq.${userId},seller_id=eq.${userId}`,
-          },
-          () => {
-            fetchConversations();
-          }
-        )
-        .subscribe();
-    }
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
-  }, [userId]);
+    // Load conversations from local storage
+    const conversations = data.getConversations();
+    setConversations(conversations);
+    setLoading(false);
+  }, []);
 
   const fetchConversations = async () => {
     try {
@@ -177,7 +155,7 @@ export function ConversationList({ userId }: ConversationListProps) {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                        {formatLastMessageTime(conversation.created_at)}
+                        {formatLastMessageTime(conversation.createdAt)}
                       </p>
                     </div>
                   </div>

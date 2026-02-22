@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/auth';
 import { ThemeToggle } from './ThemeToggle';
 
 export function Navigation() {
@@ -19,27 +19,25 @@ export function Navigation() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      if (!supabase) {
-        console.error('Supabase client not initialized');
-        setLoading(false);
-        return;
-      }
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+    const checkAuth = () => {
+      const currentUser = auth.getCurrentUser();
+      setUser(currentUser);
       setLoading(false);
     };
 
     checkAuth();
 
-    if (supabase) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user || null);
-      });
+    // Listen for storage changes (cross-tab sync)
+    const handleStorageChange = () => {
+      const currentUser = auth.getCurrentUser();
+      setUser(currentUser);
+    };
 
-      return () => subscription.unsubscribe();
-    }
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [router]);
 
   const handleProtectedNav = (e: React.MouseEvent, href: string) => {
@@ -50,9 +48,7 @@ export function Navigation() {
   };
 
   const handleLogout = async () => {
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
+    auth.signOut();
     router.push('/');
   };
 

@@ -13,7 +13,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { ConversationList } from '@/components/ConversationList';
 import { ChatInterface } from '@/components/ChatInterface';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/auth';
 
 export default function MessagesPage() {
   const params = useParams();
@@ -26,27 +26,10 @@ export default function MessagesPage() {
   const conversationId = params.conversationId as string;
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        if (!supabase) {
-          console.error('Supabase client not initialized');
-          return;
-        }
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          router.push('/login');
-          return;
-        }
-        
-        setUser(session.user);
-      } catch (error) {
-        console.error('Error checking auth:', error);
-        setAccessDenied(true);
-      } finally {
-        setLoading(false);
-      }
+    const checkAuth = () => {
+      const currentUser = auth.getCurrentUser();
+      setUser(currentUser);
+      setLoading(false);
     };
 
     checkAuth();

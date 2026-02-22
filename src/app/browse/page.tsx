@@ -13,19 +13,10 @@ import { Button } from '@/components/Button';
 import { ClientHeader } from '@/components/ClientHeader';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { auth } from '@/lib/auth';
+import { data, type Listing } from '@/lib/data';
 
-interface Listing {
-  id: string;
-  title: string;
-  price: number;
-  category: string;
-  condition: string;
-  image?: string;
-  description: string;
-  postedAt: string;
-}
-
-export default function BrowsePage() {
+function BrowsePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -35,24 +26,17 @@ export default function BrowsePage() {
   const conditions = ['All', 'New', 'Like New', 'Good', 'Fair'];
 
   useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (selectedCategory !== 'All') params.set('category', selectedCategory);
-        if (selectedCondition !== 'All') params.set('condition', selectedCondition);
-        
-        const response = await fetch(`/api/listings?${params.toString()}`);
-        const data = await response.json();
-        setListings(data.listings || []);
-      } catch (error) {
-        console.error('Error fetching listings:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Check authentication
+    if (!auth.isAuthenticated()) {
+      window.location.href = '/login';
+      return;
+    }
 
-    fetchListings();
-  }, [selectedCategory, selectedCondition]);
+    // Load listings from local storage
+    const localListings = data.getListings();
+    setListings(localListings);
+    setLoading(false);
+  }, []);
 
   const filteredListings = listings.filter(listing => {
     const categoryMatch = selectedCategory === 'All' || listing.category === selectedCategory;
@@ -189,3 +173,5 @@ export default function BrowsePage() {
     </div>
   );
 }
+
+export default BrowsePage;

@@ -11,7 +11,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Message, Conversation } from '@/lib/supabase';
+import { data, type Message, type Conversation } from '@/lib/data';
 
 interface ChatInterfaceProps {
   conversationId: string;
@@ -172,7 +172,7 @@ export function ChatInterface({ conversationId, currentUserId, conversation }: C
           </div>
         ) : (
           messages.map((message) => {
-            const isOwnMessage = message.sender_id === currentUserId;
+            const isOwnMessage = message.senderId === currentUserId;
             
             return (
               <div
@@ -187,7 +187,7 @@ export function ChatInterface({ conversationId, currentUserId, conversation }: C
                   {/* Sender info for others' messages */}
                   {!isOwnMessage && (
                     <p className="text-xs font-medium mb-1 opacity-75">
-                      {message.sender_id === currentUserId ? 'You' : 'Other User'}
+                      {message.senderId === currentUserId ? 'You' : 'Other User'}
                     </p>
                   )}
                   
@@ -200,7 +200,11 @@ export function ChatInterface({ conversationId, currentUserId, conversation }: C
                   <p className={`text-xs mt-1 ${
                     isOwnMessage ? 'text-primary-100' : 'text-text-secondary-light dark:text-text-secondary-dark'
                   }`}>
-                    {formatMessageTime(message.created_at)}
+                    {new Date(message.createdAt).toLocaleTimeString('en-US', { 
+                      hour: 'numeric', 
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
                   </p>
                 </div>
               </div>

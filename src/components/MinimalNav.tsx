@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import dynamic from 'next/dynamic';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/auth';
 
 // Dynamic import for ThemeToggle to avoid SSR issues
 const ThemeToggle = dynamic(() => import('@/components/ThemeToggle').then(mod => ({ default: mod.ThemeToggle })), {
@@ -33,27 +33,25 @@ export function MinimalNav() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      if (!supabase) {
-        setLoading(false);
-        return;
-      }
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+    const checkAuth = () => {
+      const currentUser = auth.getCurrentUser();
+      setUser(currentUser);
       setLoading(false);
     };
 
     checkAuth();
 
-    // Listen for auth changes
-    if (supabase) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user || null);
-      });
+    // Listen for storage changes (cross-tab sync)
+    const handleStorageChange = () => {
+      const currentUser = auth.getCurrentUser();
+      setUser(currentUser);
+    };
 
-      return () => subscription.unsubscribe();
-    }
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const publicNavItems = [

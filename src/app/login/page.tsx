@@ -12,7 +12,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { Button } from '@/components/Button';
-import { supabase } from '@/lib/supabaseClient';
+import { auth } from '@/lib/auth';
 
 function SearchParamsWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
@@ -31,15 +31,12 @@ function LoginForm() {
     setError('');
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const user = await auth.signIn(email, password);
 
-      if (error) {
-        setError(error.message);
-      } else {
+      if (user) {
         router.push("/browse");
+      } else {
+        setError('Invalid email or password');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -104,12 +101,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Check if user is already logged in
-    const checkSession = async () => {
-      if (!supabase) return;
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push('/messages');
+    const checkSession = () => {
+      const currentUser = auth.getCurrentUser();
+      if (currentUser) {
+        router.push('/browse');
       }
     };
     checkSession();

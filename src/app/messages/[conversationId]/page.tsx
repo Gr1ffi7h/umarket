@@ -12,7 +12,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { ChatInterface } from '@/components/ChatInterface';
-import { getCurrentUser, Conversation } from '@/lib/supabase';
+import { auth } from '@/lib/auth';
+import { data, type Conversation } from '@/lib/data';
 
 export default function ConversationPage() {
   const params = useParams();
@@ -27,7 +28,7 @@ export default function ConversationPage() {
   useEffect(() => {
     const checkAuthAndAccess = async () => {
       try {
-        const currentUser = await getCurrentUser();
+        const currentUser = auth.getCurrentUser();
         
         if (!currentUser) {
           router.push('/login');
@@ -40,13 +41,9 @@ export default function ConversationPage() {
         // TODO: Implement proper conversation participant checking when schema is updated
 
         // Fetch conversation details
-        const response = await fetch('/api/conversations');
-        const data = await response.json();
-        
-        if (data.conversations) {
-          const conv = data.conversations.find((c: Conversation) => c.id === conversationId);
-          setConversation(conv || null);
-        }
+        const conversations = data.getConversations();
+        const conv = conversations.find((c: Conversation) => c.id === conversationId);
+        setConversation(conv || null);
       } catch (error) {
         console.error('Error checking auth:', error);
       } finally {

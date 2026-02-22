@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 import { Button } from '@/components/Button';
 import { ClientHeader } from '@/components/ClientHeader';
-import { getFeaturedListings } from '@/lib/featured-listing';
+import { data } from '@/lib/data';
 import Link from 'next/link';
 
 /**
@@ -273,11 +273,11 @@ function MinimalFooter() {
  * Clean sections with intentional content placement
  */
 export default async function EnhancedLandingPage() {
-  // Get featured listings using deterministic hourly algorithm with error handling
+  // Get featured listings from local storage
   let featuredListings: any[] = [];
   
   try {
-    featuredListings = await getFeaturedListings(6);
+    featuredListings = data.getListings().slice(0, 6); // Get first 6 as featured
   } catch (error) {
     console.error('Error fetching featured listings:', error);
     // Continue with empty array - UI will handle gracefully
