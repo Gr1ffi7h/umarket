@@ -12,7 +12,6 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { Button } from '@/components/Button';
-import { auth } from '@/lib/auth-supabase';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
@@ -45,12 +44,19 @@ function LoginForm() {
     }
 
     try {
-      const user = await auth.signIn(emailTrimmed, passwordTrimmed);
+      const res = await fetch('/api/auth/sign-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
       
-      if (user) {
-        router.push("/browse");
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setError(data.error || 'Sign in failed');
       } else {
-        setError('Invalid email or password');
+        // Redirect to browse on successful login
+        router.push('/browse');
       }
     } catch (err: any) {
       // Handle any network/fetch errors that might come through
@@ -147,15 +153,9 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkSession = async () => {
-      const currentUser = await auth.getCurrentUser();
-      if (currentUser) {
-        router.push('/browse');
-      }
-    };
-    checkSession();
-  }, [router]);
+    // Session check will be handled by navigation components
+    // This keeps the login page simple and focused on form handling
+  }, []);
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">

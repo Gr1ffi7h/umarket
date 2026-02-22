@@ -12,7 +12,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
-import { auth } from '@/lib/auth-supabase';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
@@ -110,22 +109,25 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const emailTrimmed = formData.email.trim();
-      const passwordTrimmed = formData.password.trim();
-      const result = await auth.signUp(emailTrimmed, passwordTrimmed, formData.name);
+      const res = await fetch('/api/auth/sign-up', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: formData.email, 
+          password: formData.password, 
+          name: formData.name 
+        }),
+      });
       
-      if (result.success) {
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setErrors({ submit: data.error || 'Sign Up failed' });
+      } else {
         // Redirect to login page on successful signup
         if (typeof window !== 'undefined') {
           window.location.href = '/login?message=signup-success';
         }
-      } else {
-        // Override any 6-character error messages with our 8-character requirement
-        let errorMessage = result.error || 'Registration failed. Please try again.';
-        if (errorMessage.includes('6 characters')) {
-          errorMessage = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
-        }
-        setErrors({ submit: errorMessage });
       }
     } catch (error) {
       console.error('Signup error:', error);
