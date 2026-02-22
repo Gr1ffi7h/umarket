@@ -8,103 +8,51 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
-import { ClientHeader } from '@/components/ClientHeader';
+import { useAuth } from '@/context/AuthContext';
+import { ProtectedPage } from '@/components/ProtectedPage';
+import { ListingsService, Listing } from '@/lib/listings';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-// Mock data for user's listings
-const mockListings = [
-  {
-    id: '1',
-    title: 'MacBook Pro 14"',
-    price: 1200,
-    category: 'Electronics',
-    condition: 'Like New',
-    image: '/api/placeholder/300/200',
-    description: 'Excellent condition MacBook Pro, barely used.',
-    status: 'active',
-    views: 45,
-    inquiries: 3,
-    postedAt: '2024-01-15',
-  },
-  {
-    id: '2',
-    title: 'Calculus Textbook',
-    price: 45,
-    category: 'Books',
-    condition: 'Good',
-    image: '/api/placeholder/300/200',
-    description: 'Calculus: Early Transcendentals, 8th Edition.',
-    status: 'active',
-    views: 23,
-    inquiries: 2,
-    postedAt: '2024-01-14',
-  },
-  {
-    id: '3',
-    title: 'Desk Lamp',
-    price: 25,
-    category: 'Furniture',
-    condition: 'Good',
-    status: 'sold',
-    views: 67,
-    inquiries: 1,
-    postedAt: '2024-01-13',
-  },
-  {
-    id: '4',
-    title: 'Nike Running Shoes',
-    price: 60,
-    category: 'Clothing',
-    condition: 'Fair',
-    status: 'active',
-    postedAt: '2024-01-12',
-    views: 12,
-    inquiries: 1,
-  },
-  {
-    id: '5',
-    title: 'Coffee Maker',
-    price: 35,
-    category: 'Appliances',
-    condition: 'New',
-    status: 'active',
-    postedAt: '2024-01-11',
-    views: 34,
-    inquiries: 4,
-  },
-  {
-    id: '6',
-    title: 'Gaming Mouse',
-    price: 40,
-    category: 'Electronics',
-    condition: 'Like New',
-    status: 'pending',
-    postedAt: '2024-01-10',
-    views: 8,
-    inquiries: 0,
-  },
-];
+export const dynamic = "force-dynamic";
 
 const categories = ['All', 'Electronics', 'Books', 'Furniture', 'Clothing', 'Appliances'];
-const statuses = ['All', 'Active', 'Sold', 'Draft'];
+const statuses = ['All', 'Active', 'Sold', 'Removed'];
 
-/**
- * Minimal My Listings Page Component
- * 
- * Displays user's listings with compact layout
- * Reduced spacing and minimal visual elements
- */
-export default function MinimalMyListingsPage() {
-  const [listings, setListings] = useState(mockListings);
+function MyListingsContent() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadListings = async () => {
+      if (!user) return;
+      
+      try {
+        const userListings = await ListingsService.getUserListings(user.id);
+        setListings(userListings);
+      } catch (error) {
+        console.error('Error loading listings:', error);
+        setError('Failed to load your listings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadListings();
+  }, [user]);
 
   // Filter listings based on filters
   const filteredListings = listings.filter(listing => {
     const matchesCategory = selectedCategory === 'All' || listing.category === selectedCategory;
-    const matchesStatus = selectedStatus === 'All' || listing.status.toLowerCase() === selectedStatus.toLowerCase();
+    const matchesStatus = selectedStatus === 'All' || listing.status === selectedStatus.toLowerCase();
     return matchesCategory && matchesStatus;
   });
 
@@ -112,15 +60,13 @@ export default function MinimalMyListingsPage() {
   const sortedListings = [...filteredListings].sort((a, b) => {
     switch (sortBy) {
       case 'newest':
-        return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       case 'oldest':
-        return new Date(a.postedAt).getTime() - new Date(b.postedAt).getTime();
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       case 'price-low':
         return a.price - b.price;
       case 'price-high':
         return b.price - a.price;
-      case 'views':
-        return b.views - a.views;
       default:
         return 0;
     }
@@ -129,41 +75,68 @@ export default function MinimalMyListingsPage() {
   /**
    * Handle listing deletion
    */
-  const handleDeleteListing = (listingId: string) => {
-    if (confirm('Are you sure you want to delete this listing?')) {
+  const handleDeleteListing = async (listingId: string) => {
+    if (!confirm('Are you sure you want to delete this listing?')) return;
+    
+    try {
+      await ListingsService.deleteListing(listingId);
       setListings(prev => prev.filter(listing => listing.id !== listingId));
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      setError('Failed to delete listing');
     }
   };
 
   /**
    * Handle listing status change
    */
-  const handleStatusChange = (listingId: string, newStatus: string) => {
-    setListings(prev => prev.map(listing => 
-      listing.id === listingId 
-        ? { ...listing, status: newStatus }
-        : listing
-    ));
+  const handleStatusChange = async (listingId: string, newStatus: string) => {
+    try {
+      await ListingsService.updateListing(listingId, { status: newStatus.toLowerCase() as any });
+      setListings(prev => prev.map(listing => 
+        listing.id === listingId 
+          ? { ...listing, status: newStatus.toLowerCase() as any }
+          : listing
+      ));
+    } catch (error) {
+      console.error('Error updating listing status:', error);
+      setError('Failed to update listing status');
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <ClientHeader />
-      
-      <main className="max-w-4xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded text-red-800 dark:text-red-200">
+            {error}
+          </div>
+        )}
+
         {/* Page Header */}
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               My Listings
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-gray-600 dark:text-gray-300">
               Manage your marketplace listings
             </p>
           </div>
-          <Button href="/create-listing" variant="primary" size="sm">
-            Create Listing
-          </Button>
+          <Link href="/create-listing">
+            <Button>
+              Create Listing
+            </Button>
+          </Link>
         </div>
 
         {/* Filters */}
@@ -275,9 +248,7 @@ export default function MinimalMyListingsPage() {
                         </div>
                         
                         <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-                          <span>{listing.views} views</span>
-                          <span>{listing.inquiries} inquiries</span>
-                          <span>{listing.postedAt}</span>
+                          <span>Posted {new Date(listing.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
@@ -287,20 +258,14 @@ export default function MinimalMyListingsPage() {
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center space-x-2">
-                    <Button
-                      href={`/listing/${listing.id}`}
-                      variant="outline"
-                      size="sm"
-                    >
-                      View
-                    </Button>
-                    <Button
-                      href={`/create-listing?edit=${listing.id}`}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Edit
-                    </Button>
+                    <Link href={`/listing/${listing.id}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                      >
+                        View
+                      </Button>
+                    </Link>
                   </div>
                   
                   <div className="flex items-center space-x-2">
@@ -331,15 +296,25 @@ export default function MinimalMyListingsPage() {
             <div className="text-gray-400 dark:text-gray-500 text-sm mb-2">
               No listings found
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
               Start by creating your first listing
             </p>
-            <Button href="/create-listing" variant="primary" size="sm">
-              Create Listing
-            </Button>
+            <Link href="/create-listing">
+              <Button>
+                Create Listing
+              </Button>
+            </Link>
           </div>
         )}
-      </main>
+      </div>
     </div>
+  );
+}
+
+export default function MyListingsPage() {
+  return (
+    <ProtectedPage>
+      <MyListingsContent />
+    </ProtectedPage>
   );
 }

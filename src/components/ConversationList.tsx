@@ -12,23 +12,14 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
-import { MessagingService, Conversation as ConversationType } from '@/lib/messaging';
-
-interface Conversation {
-  id: string;
-  participantId: string;
-  participantName: string;
-  lastMessage?: string;
-  lastMessageTime?: string;
-  createdAt: string;
-}
+import { MessagingService, Conversation } from '@/lib/messaging';
 
 interface ConversationListProps {
   userId: string;
 }
 
 export function ConversationList({ userId }: ConversationListProps) {
-  const [conversations, setConversations] = useState<ConversationType[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -72,12 +63,14 @@ export function ConversationList({ userId }: ConversationListProps) {
   }, [user]);
 
   const getOtherParticipant = (conversation: Conversation) => {
-    // Simplified for now - return placeholder data
-    // TODO: Implement proper participant logic when schema is updated
+    if (!user) return null;
+    
+    const isParticipant1 = conversation.participant1_id === user.id;
+    
     return {
-      id: 'other-user',
-      username: 'Other User',
-      avatar_url: undefined
+      id: isParticipant1 ? conversation.participant2_id : conversation.participant1_id,
+      username: isParticipant1 ? conversation.participant2_name || 'User' : conversation.participant1_name || 'User',
+      avatar_url: isParticipant1 ? conversation.participant2_avatar : conversation.participant1_avatar,
     };
   };
 
@@ -137,7 +130,7 @@ export function ConversationList({ userId }: ConversationListProps) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-6">
+      <h1 className="text-xl font-medium text-gray-900 dark:text-white mb-6">
         Messages
       </h1>
       
@@ -149,11 +142,11 @@ export function ConversationList({ userId }: ConversationListProps) {
             <Link
               key={conversation.id}
               href={`/messages/${conversation.id}`}
-              className="block bg-background-light dark:bg-background-dark border border-gray-200 dark:border-primary-700 rounded p-4 hover:bg-gray-50 dark:hover:bg-primary-800 transition-colors"
+              className="block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <div className="flex items-start space-x-3">
                 {/* Avatar */}
-                <div className="w-10 h-10 bg-gray-300 dark:bg-primary-700 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
                   {otherParticipant?.avatar_url ? (
                     <Image 
                       src={otherParticipant.avatar_url} 
@@ -163,7 +156,7 @@ export function ConversationList({ userId }: ConversationListProps) {
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
-                    <span className="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                       {otherParticipant?.username?.charAt(0) || '?'}
                     </span>
                   )}
@@ -171,26 +164,20 @@ export function ConversationList({ userId }: ConversationListProps) {
                 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-1">
-                    <div>
-                      <h3 className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark truncate">
-                        {otherParticipant?.username || 'Unknown User'}
-                      </h3>
-                      <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark truncate">
-                        Conversation
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                        {formatLastMessageTime(conversation.createdAt)}
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                      {otherParticipant?.username || 'Unknown User'}
+                    </h3>
+                    {conversation.last_message_at && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(conversation.last_message_at).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                   
-                  {/* Last message preview would go here */}
-                  <div className="text-xs text-text-secondary-light dark:text-text-secondary-dark truncate">
-                    Tap to view conversation
-                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                    No messages yet
+                  </p>
                 </div>
               </div>
             </Link>

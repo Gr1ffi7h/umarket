@@ -10,231 +10,185 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
-import { ClientHeader } from '@/components/ClientHeader';
-import { auth } from '@/lib/auth-supabase';
+import { useAuth } from '@/context/AuthContext';
+import { ProtectedPage } from '@/components/ProtectedPage';
+import { supabase } from '@/lib/supabaseClient';
+import Link from 'next/link';
 
-// Prevent static generation during build
 export const dynamic = "force-dynamic";
 
-// Mock user data
-const mockUser = {
-  name: 'John Doe',
-  email: 'john.doe@university.edu',
-  campus: 'University Main Campus',
-  memberSince: 'January 2024',
-  bio: 'Computer Science major, interested in tech and books. Always looking for good deals!',
-  avatar: '/api/placeholder/80/80',
-  stats: {
-    totalListings: 12,
-    activeListings: 3,
-    soldItems: 9,
-    averageResponseTime: '1 hour',
-  },
-  recentActivity: [
-    {
-      id: '1',
-      type: 'listing',
-      title: 'MacBook Pro 14"',
-      timestamp: '2024-01-15T14:30:00Z',
-      status: 'active',
-    },
-    {
-      id: '2',
-      type: 'sale',
-      title: 'Calculus Textbook',
-      timestamp: '2024-01-14T10:15:00Z',
-      status: 'sold',
-    },
-    {
-      id: '3',
-      type: 'message',
-      title: 'Message from Jane Smith',
-      timestamp: '2024-01-13T16:45:00Z',
-      status: 'unread',
-    },
-  ],
-};
-
-/**
- * Minimal Profile Page Component
- * 
- * Displays user profile with compact layout
- * Reduced spacing and minimal visual elements
- */
-export default function MinimalProfilePage() {
-  const [user, setUser] = useState<any>(null);
+function ProfileContent() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalListings: 0,
+    activeListings: 0,
+    soldItems: 0,
+  });
 
   useEffect(() => {
-    const loadUser = async () => {
+    const loadProfile = async () => {
+      if (!user) return;
+      
       try {
-        const currentUser = await auth.getCurrentUser();
-        setUser(currentUser);
+        // Load user profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        // Load user stats
+        const { data: listingsData } = await supabase
+          .from('listings')
+          .select('status')
+          .eq('user_id', user.id);
+
+        const totalListings = listingsData?.length || 0;
+        const activeListings = listingsData?.filter(l => l.status === 'active').length || 0;
+        const soldItems = listingsData?.filter(l => l.status === 'sold').length || 0;
+
+        setStats({ totalListings, activeListings, soldItems });
+        setProfile(profileData);
       } catch (error) {
-        console.error('Error loading user:', error);
+        console.error('Error loading profile:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadUser();
-  }, []);
+    loadProfile();
+  }, [user]);
 
-  const memberSince = user?.createdAt 
-    ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const memberSince = profile?.created_at 
+    ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : user?.created_at
+    ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : 'Unknown';
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
-  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900">
-        <ClientHeader />
-        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900">
-        <ClientHeader />
-        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-          <div className="text-center">
-            <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-2">Not Logged In</h2>
-            <p className="text-gray-600 dark:text-gray-300">Please log in to view your profile.</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <ClientHeader />
-      
-      <main className="max-w-4xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Profile Header */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-start space-x-4">
-            <div className="w-16 h-16 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-lg font-medium text-gray-600 dark:text-gray-300">
-                {user?.fullName?.charAt(0) || 'U'}
+            <div className="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl font-medium text-gray-600 dark:text-gray-300">
+                {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
               </span>
             </div>
             <div className="flex-1">
-              <h1 className="text-xl font-medium text-gray-900 dark:text-white mb-1">
-                {user?.fullName || 'User'}
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                {profile?.full_name || 'User'}
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+              <p className="text-gray-600 dark:text-gray-300 mb-2">
                 {user?.email || 'user@university.edu'}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-300">
-                University Campus • Member since {memberSince}
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {profile?.campus || 'University Campus'} • Member since {memberSince}
               </p>
+              {profile?.bio && (
+                <p className="text-gray-600 dark:text-gray-300 mt-3">
+                  {profile.bio}
+                </p>
+              )}
             </div>
-            <Button
-              href="/profile/edit"
-              variant="outline"
-              size="sm"
-            >
-              Edit Profile
-            </Button>
+            <Link href="/profile/edit">
+              <Button variant="outline">
+                Edit Profile
+              </Button>
+            </Link>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 mb-4">
-          <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-            Stats
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Your Stats
           </h2>
-          <div className="text-center py-8">
-            <p className="text-gray-600 dark:text-gray-300">
-              Stats and activity tracking coming soon.
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                {stats.totalListings}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                Total Listings
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                {stats.activeListings}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                Active Listings
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                {stats.soldItems}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                Sold Items
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 mb-4">
-          <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Quick Actions
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Button
-              href="/my-listings"
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              My Listings
-            </Button>
-            <Button
-              href="/messages"
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              Messages
-            </Button>
-            <Button
-              href="/create-listing"
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              Create Listing
-            </Button>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
-          <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-            Recent Activity
-          </h2>
-          <div className="text-center py-8">
-            <p className="text-gray-600 dark:text-gray-300">
-              No recent activity yet.
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link href="/my-listings">
+              <Button variant="outline" className="w-full">
+                My Listings
+              </Button>
+            </Link>
+            <Link href="/messages">
+              <Button variant="outline" className="w-full">
+                Messages
+              </Button>
+            </Link>
+            <Link href="/create-listing">
+              <Button variant="outline" className="w-full">
+                Create Listing
+              </Button>
+            </Link>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4">
-          <Button
-            href="/create-listing"
-            variant="primary"
-            size="lg"
-            className="flex-1"
-          >
-            Create New Listing
-          </Button>
-          <Button
-            href="/browse"
-            variant="outline"
-            size="lg"
-            className="flex-1"
-          >
-            Browse Marketplace
-          </Button>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/create-listing">
+            <Button className="flex-1">
+              Create New Listing
+            </Button>
+          </Link>
+          <Link href="/browse">
+            <Button variant="outline" className="flex-1">
+              Browse Marketplace
+            </Button>
+          </Link>
         </div>
-      </main>
+      </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedPage>
+      <ProfileContent />
+    </ProtectedPage>
   );
 }
