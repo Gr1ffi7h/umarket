@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth-supabase';
 import { ThemeToggle } from './ThemeToggle';
 
 export function Navigation() {

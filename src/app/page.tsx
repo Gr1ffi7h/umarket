@@ -11,7 +11,6 @@ export const dynamic = "force-dynamic";
 
 import { Button } from '@/components/Button';
 import { ClientHeader } from '@/components/ClientHeader';
-import { data } from '@/lib/data';
 import Link from 'next/link';
 
 /**
@@ -274,14 +273,8 @@ function MinimalFooter() {
  */
 export default async function EnhancedLandingPage() {
   // Get featured listings from local storage
-  let featuredListings: any[] = [];
-  
-  try {
-    featuredListings = data.getListings().slice(0, 6); // Get first 6 as featured
-  } catch (error) {
-    console.error('Error fetching featured listings:', error);
-    // Continue with empty array - UI will handle gracefully
-  }
+  // Featured listings - empty for now
+  const featuredListings: any[] = [];
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">

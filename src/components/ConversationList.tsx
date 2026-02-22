@@ -11,8 +11,16 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth } from '@/lib/auth';
-import { data, type Conversation } from '@/lib/data';
+import { auth } from '@/lib/auth-supabase';
+
+interface Conversation {
+  id: string;
+  participantId: string;
+  participantName: string;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  createdAt: string;
+}
 
 interface ConversationListProps {
   userId: string;
@@ -23,9 +31,8 @@ export function ConversationList({ userId }: ConversationListProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load conversations from local storage
-    const conversations = data.getConversations();
-    setConversations(conversations);
+    // Load conversations - empty for now
+    setConversations([]);
     setLoading(false);
   }, []);
 

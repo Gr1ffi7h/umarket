@@ -11,7 +11,25 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { data, type Message, type Conversation } from '@/lib/data';
+
+interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  timestamp: string;
+  createdAt: string;
+  type?: 'text' | 'image';
+  imageUrl?: string;
+}
+
+interface Conversation {
+  id: string;
+  participantId: string;
+  participantName: string;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  createdAt: string;
+}
 
 interface ChatInterfaceProps {
   conversationId: string;

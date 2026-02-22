@@ -80,6 +80,10 @@ export default function MinimalProfilePage() {
     loadUser();
   }, []);
 
+  const memberSince = user?.createdAt 
+    ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : 'Unknown';
+
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -141,7 +145,7 @@ export default function MinimalProfilePage() {
                 {user?.email || 'user@university.edu'}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-300">
-                University Campus • Member since {new Date(user?.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                University Campus • Member since {memberSince}
               </p>
             </div>
             <Button

@@ -14,6 +14,9 @@ import { auth } from '@/lib/auth-supabase';
 import { listingsService } from '@/lib/listings';
 import { AuthGuard } from '@/components/AuthGuard';
 
+// Prevent static generation during build
+export const dynamic = "force-dynamic";
+
 function CreateListingContent() {
   const [formData, setFormData] = useState({
     title: '',
@@ -55,13 +58,19 @@ function CreateListingContent() {
 
       if (newListing) {
         // Redirect to my listings
-        window.location.href = '/my-listings';
+        if (typeof window !== 'undefined') {
+          window.location.href = '/my-listings';
+        }
       } else {
-        alert('Failed to create listing. Please try again.');
+        if (typeof window !== 'undefined') {
+          alert('Failed to create listing. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Error creating listing:', error);
-      alert('Failed to create listing. Please try again.');
+      if (typeof window !== 'undefined') {
+        alert('Failed to create listing. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

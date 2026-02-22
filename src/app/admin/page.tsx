@@ -172,12 +172,7 @@ function AdminPanelContent() {
           <p className="text-gray-600 dark:text-gray-300 mt-2">Manage users, listings, and conversations</p>
         </div>
         
-        <AdminDashboard 
-          initialUsers={adminData.users}
-          initialListings={adminData.listings}
-          initialConversations={adminData.conversations}
-          currentUserId={adminData.currentUserId}
-        />
+        <AdminDashboard />
       </div>
     </div>
   );

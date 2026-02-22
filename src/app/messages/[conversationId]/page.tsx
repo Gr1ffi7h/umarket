@@ -12,8 +12,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { ChatInterface } from '@/components/ChatInterface';
-import { auth } from '@/lib/auth';
-import { data, type Conversation } from '@/lib/data';
+import { auth } from '@/lib/auth-supabase';
+
+interface Conversation {
+  id: string;
+  participantId: string;
+  participantName: string;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  createdAt: string;
+}
 
 export default function ConversationPage() {
   const params = useParams();
@@ -40,10 +48,8 @@ export default function ConversationPage() {
         // For now, allow access to authenticated users
         // TODO: Implement proper conversation participant checking when schema is updated
 
-        // Fetch conversation details
-        const conversations = data.getConversations();
-        const conv = conversations.find((c: Conversation) => c.id === conversationId);
-        setConversation(conv || null);
+        // Fetch conversation details - empty for now
+        setConversation(null);
       } catch (error) {
         console.error('Error checking auth:', error);
       } finally {
