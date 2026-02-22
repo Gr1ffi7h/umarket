@@ -49,8 +49,13 @@ function LoginForm() {
       } else {
         setError('Invalid email or password');
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
+    } catch (err: any) {
+      // Handle any network/fetch errors that might come through
+      if (err.message?.includes('fetch') || err.message?.includes('network')) {
+        setError('Failed to connect. Please check your internet connection.');
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }

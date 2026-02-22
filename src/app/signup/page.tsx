@@ -117,7 +117,12 @@ export default function SignUpPage() {
           window.location.href = '/login?message=signup-success';
         }
       } else {
-        setErrors({ submit: result.error || 'Registration failed. Please try again.' });
+        // Override any 6-character error messages with our 8-character requirement
+        let errorMessage = result.error || 'Registration failed. Please try again.';
+        if (errorMessage.includes('6 characters')) {
+          errorMessage = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+        }
+        setErrors({ submit: errorMessage });
       }
     } catch (error) {
       console.error('Signup error:', error);
