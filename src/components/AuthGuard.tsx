@@ -9,7 +9,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth-supabase';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -26,8 +26,8 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const user = auth.getCurrentUser();
+    const checkAuth = async () => {
+      const user = await auth.getCurrentUser();
       setIsAuthenticated(!!user);
       setIsLoading(false);
 

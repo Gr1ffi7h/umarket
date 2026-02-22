@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import dynamic from 'next/dynamic';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth-supabase';
 
 // Dynamic import for ThemeToggle to avoid SSR issues
 const ThemeToggle = dynamic(() => import('@/components/ThemeToggle').then(mod => ({ default: mod.ThemeToggle })), {
@@ -33,24 +33,23 @@ export function MinimalNav() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const currentUser = auth.getCurrentUser();
+    const checkAuth = async () => {
+      const currentUser = await auth.getCurrentUser();
       setUser(currentUser);
       setLoading(false);
     };
 
     checkAuth();
 
-    // Listen for storage changes (cross-tab sync)
-    const handleStorageChange = () => {
-      const currentUser = auth.getCurrentUser();
-      setUser(currentUser);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
+    // Listen for auth state changes
+    const { data: authListener } = auth.onAuthStateChange((user) => {
+      setUser(user);
+    });
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      if (typeof window !== 'undefined') {
+        authListener?.subscription.unsubscribe();
+      }
     };
   }, []);
 

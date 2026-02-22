@@ -8,7 +8,7 @@
 
 'use client';
 
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth-supabase';
 import { MinimalNav } from '@/components/MinimalNav';
 
 /**

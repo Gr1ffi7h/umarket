@@ -15,6 +15,9 @@ import { ConversationList } from '@/components/ConversationList';
 import { ChatInterface } from '@/components/ChatInterface';
 import { auth } from '@/lib/auth-supabase';
 
+// Prevent static generation during build
+export const dynamic = "force-dynamic";
+
 export default function MessagesPage() {
   const params = useParams();
   const router = useRouter();

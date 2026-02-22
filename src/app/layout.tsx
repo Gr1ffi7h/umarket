@@ -11,6 +11,7 @@ import { Inter } from 'next/font/google';
 import '../styles/globals.css';
 import { Navigation } from '@/components/Navigation-supabase';
 import { MobileBottomNav } from '@/components/MobileBottomNav-supabase';
+import { GlobalErrorLogger } from '@/components/GlobalErrorLogger';
 
 // Optimize font loading
 const inter = Inter({
@@ -101,24 +102,27 @@ export default function RootLayout({
         <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
       </head>
-      <body className="min-h-screen bg-background font-sans antialiased overflow-x-hidden">
-        {/* Skip to main content for accessibility */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-primary-foreground px-4 py-2 rounded-md"
-        >
-          Skip to main content
-        </a>
-        
-        <Navigation />
-        <main id="main-content" className="relative flex-1 pb-16 md:pb-0">
-          {children}
-        </main>
-        
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav />
-        
-        {/* Footer or global components can go here */}
+      <body className={`${inter.variable} font-sans antialiased overflow-x-hidden min-h-screen`}>
+        <GlobalErrorLogger />
+        <div className="flex flex-col min-h-screen">
+          {/* Skip to main content for accessibility */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-primary-foreground px-4 py-2 rounded-md"
+          >
+            Skip to main content
+          </a>
+          
+          <Navigation />
+          <main id="main-content" className="relative flex-1 pb-16 md:pb-0">
+            {children}
+          </main>
+          
+          {/* Mobile Bottom Navigation */}
+          <MobileBottomNav />
+          
+          {/* Footer or global components can go here */}
+        </div>
       </body>
     </html>
   );

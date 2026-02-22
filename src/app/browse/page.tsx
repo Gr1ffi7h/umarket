@@ -16,6 +16,9 @@ import Image from 'next/image';
 import { auth } from '@/lib/auth-supabase';
 import { listingsService } from '@/lib/listings';
 
+// Prevent static generation during build
+export const dynamic = "force-dynamic";
+
 function BrowsePage() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -8,9 +8,13 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { ClientHeader } from '@/components/ClientHeader';
+import { auth } from '@/lib/auth-supabase';
+
+// Prevent static generation during build
+export const dynamic = "force-dynamic";
 
 // Mock user data
 const mockUser = {
@@ -58,6 +62,24 @@ const mockUser = {
  * Reduced spacing and minimal visual elements
  */
 export default function MinimalProfilePage() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const currentUser = await auth.getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Error loading user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
+
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -73,6 +95,31 @@ export default function MinimalProfilePage() {
     return date.toLocaleDateString();
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <ClientHeader />
+        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <ClientHeader />
+        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+          <div className="text-center">
+            <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-2">Not Logged In</h2>
+            <p className="text-gray-600 dark:text-gray-300">Please log in to view your profile.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <ClientHeader />
@@ -83,18 +130,18 @@ export default function MinimalProfilePage() {
           <div className="flex items-start space-x-4">
             <div className="w-16 h-16 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-lg font-medium text-gray-600 dark:text-gray-300">
-                {mockUser.name.charAt(0)}
+                {user?.fullName?.charAt(0) || 'U'}
               </span>
             </div>
             <div className="flex-1">
               <h1 className="text-xl font-medium text-gray-900 dark:text-white mb-1">
-                {mockUser.name}
+                {user?.fullName || 'User'}
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                {mockUser.email}
+                {user?.email || 'user@university.edu'}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-300">
-                {mockUser.campus} • Member since {mockUser.memberSince}
+                University Campus • Member since {new Date(user?.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </p>
             </div>
             <Button
@@ -112,39 +159,10 @@ export default function MinimalProfilePage() {
           <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             Stats
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="text-center">
-              <div className="text-lg font-medium text-blue-600 dark:text-blue-400">
-                {mockUser.stats.totalListings}
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-300">
-                Total Listings
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-medium text-green-600 dark:text-green-400">
-                {mockUser.stats.activeListings}
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-300">
-                Active
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-medium text-purple-600 dark:text-purple-400">
-                {mockUser.stats.soldItems}
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-300">
-                Sold
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-medium text-orange-600 dark:text-orange-400">
-                {mockUser.stats.averageResponseTime}
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-300">
-                Response Time
-              </div>
-            </div>
+          <div className="text-center py-8">
+            <p className="text-gray-600 dark:text-gray-300">
+              Stats and activity tracking coming soon.
+            </p>
           </div>
         </div>
 
@@ -186,31 +204,10 @@ export default function MinimalProfilePage() {
           <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             Recent Activity
           </h2>
-          <div className="space-y-2">
-            {mockUser.recentActivity.map(activity => (
-              <div key={activity.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.status === 'active' ? 'bg-green-500' :
-                    activity.status === 'sold' ? 'bg-gray-400' :
-                    'bg-blue-500'
-                  }`} />
-                  <div>
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300">
-                      {activity.type === 'listing' ? 'Listed item' :
-                       activity.type === 'sale' ? 'Sold item' :
-                       'New message'}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatTimestamp(activity.timestamp)}
-                </div>
-              </div>
-            ))}
+          <div className="text-center py-8">
+            <p className="text-gray-600 dark:text-gray-300">
+              No recent activity yet.
+            </p>
           </div>
         </div>
 
