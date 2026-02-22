@@ -54,6 +54,18 @@ function FeaturedSection() {
     );
   }
 
+  if (featuredListings.length === 0) {
+    return (
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Featured Items</h2>
+        <div className="text-center py-12">
+          <p className="text-gray-600 dark:text-gray-400 text-lg">No featured listings yet.</p>
+          <p className="text-gray-500 dark:text-gray-500 mt-2">Be the first to post something!</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-8">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Featured Items</h2>
