@@ -78,16 +78,17 @@ export default function SignUpPage() {
     }
 
     // Password validation
-    if (!formData.password) {
+    const passwordTrimmed = formData.password.trim();
+    if (!passwordTrimmed) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < MIN_PASSWORD_LENGTH) {
+    } else if (passwordTrimmed.length < MIN_PASSWORD_LENGTH) {
       newErrors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
     }
 
     // Confirm password validation
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
+    } else if (passwordTrimmed !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
@@ -109,7 +110,9 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const result = await auth.signUp(formData.email, formData.password, formData.name);
+      const emailTrimmed = formData.email.trim();
+      const passwordTrimmed = formData.password.trim();
+      const result = await auth.signUp(emailTrimmed, passwordTrimmed, formData.name);
       
       if (result.success) {
         // Redirect to login page on successful signup
@@ -313,7 +316,7 @@ export default function SignUpPage() {
               variant="primary"
               size="lg"
               loading={isSubmitting}
-              disabled={isSubmitting || formData.password.length < MIN_PASSWORD_LENGTH || !formData.email || !formData.name || !formData.confirmPassword}
+              disabled={isSubmitting || formData.password.trim().length < MIN_PASSWORD_LENGTH || !formData.email.trim() || !formData.name.trim() || !formData.confirmPassword}
               className="w-full py-3 active:scale-95 transition-transform duration-150"
             >
               {isSubmitting ? 'Creating Account...' : 'Sign Up'}

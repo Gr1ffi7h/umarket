@@ -35,14 +35,17 @@ function LoginForm() {
     setError('');
 
     // Client-side validation
-    if (password.length < MIN_PASSWORD_LENGTH) {
+    const emailTrimmed = email.trim();
+    const passwordTrimmed = password.trim();
+    
+    if (passwordTrimmed.length < MIN_PASSWORD_LENGTH) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
       setLoading(false);
       return;
     }
 
     try {
-      const user = await auth.signIn(email, password);
+      const user = await auth.signIn(emailTrimmed, passwordTrimmed);
       
       if (user) {
         router.push("/browse");
@@ -116,12 +119,12 @@ function LoginForm() {
       </div>
       
       {/* Password feedback */}
-      {password && password.length < MIN_PASSWORD_LENGTH && (
+      {password && password.trim().length < MIN_PASSWORD_LENGTH && (
         <p className="mt-1 text-sm text-gray-500">
           Password must be at least {MIN_PASSWORD_LENGTH} characters
         </p>
       )}
-      {password && password.length >= MIN_PASSWORD_LENGTH && (
+      {password && password.trim().length >= MIN_PASSWORD_LENGTH && (
         <p className="mt-1 text-sm text-green-600">
           Password looks good!
         </p>
@@ -132,7 +135,7 @@ function LoginForm() {
         variant="primary"
         size="lg"
         className="w-full py-3 active:scale-95 transition-transform duration-150"
-        disabled={loading || password.length < MIN_PASSWORD_LENGTH || !email}
+        disabled={loading || password.trim().length < MIN_PASSWORD_LENGTH || !email.trim()}
       >
         {loading ? 'Signing in...' : 'Sign In'}
       </Button>
