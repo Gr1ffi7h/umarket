@@ -10,8 +10,12 @@
 import { useState, useEffect } from 'react';
 import { redirect } from 'next/navigation';
 import { AdminDashboard } from '@/components/AdminDashboard';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth-supabase';
 import { AuthGuard } from '@/components/AuthGuard';
+import { supabase } from '@/lib/supabase';
+
+// Prevent static generation during build
+export const dynamic = "force-dynamic";
 
 interface User {
   id: string;
@@ -50,9 +54,18 @@ function AdminPanelContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadAdminData = () => {
+    const loadAdminData = async () => {
       try {
-        const currentUser = auth.getCurrentUser();
+        // Check authentication using Supabase
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (!sessionData.session) {
+          setError('Not authenticated');
+          setLoading(false);
+          return;
+        }
+
+        const currentUser = await auth.getCurrentUser();
         
         if (!currentUser) {
           setError('Not authenticated');
@@ -60,10 +73,14 @@ function AdminPanelContent() {
           return;
         }
 
-        // For demo purposes, we'll consider the first user as admin
-        // In a real app, you'd have a role field in the user object
-        const users = JSON.parse(localStorage.getItem('umarket_users') || '[]');
-        const isAdmin = users.length > 0 && users[0].id === currentUser.id;
+        // For demo purposes, we'll consider first user as admin
+        // In a real app, you'd have a role field in user object
+        const { data: users } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: true });
+          
+        const isAdmin = users && users.length > 0 && users[0].id === currentUser.id;
         
         if (!isAdmin) {
           setError('Access denied. Admin privileges required.');
@@ -71,34 +88,39 @@ function AdminPanelContent() {
           return;
         }
 
-        // Load data from localStorage
-        const listings = JSON.parse(localStorage.getItem('umarket_listings') || '[]');
-        const conversations = JSON.parse(localStorage.getItem('umarket_conversations') || '[]');
+        // Load data from Supabase
+        const { data: listings } = await supabase
+          .from('listings')
+          .select('*');
+          
+        const { data: conversations } = await supabase
+          .from('conversations')
+          .select('*');
 
         setAdminData({
-          users: users.map((u: any) => ({
+          users: users?.map((u: any) => ({
             id: u.id,
-            full_name: u.fullName,
+            full_name: u.full_name,
             role: u.role || 'user',
-            created_at: u.createdAt
-          })),
-          listings: listings.map((l: any) => ({
+            created_at: u.created_at
+          })) || [],
+          listings: listings?.map((l: any) => ({
             id: l.id,
             title: l.title,
             price: l.price,
             description: l.description,
-            user_id: l.userId,
-            created_at: l.createdAt,
+            user_id: l.user_id,
+            created_at: l.created_at,
             profiles: {
-              id: l.userId,
-              full_name: l.sellerName || 'Unknown'
+              id: l.user_id,
+              full_name: l.seller_name || 'Unknown'
             }
-          })),
-          conversations: conversations.map((c: any) => ({
+          })) || [],
+          conversations: conversations?.map((c: any) => ({
             id: c.id,
-            created_at: c.createdAt,
-            messages: [{ count: c.messageCount || 0 }]
-          })),
+            created_at: c.created_at,
+            messages: [{ count: c.message_count || 0 }]
+          })) || [],
           currentUserId: currentUser.id
         });
       } catch (err) {

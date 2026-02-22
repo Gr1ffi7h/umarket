@@ -149,7 +149,7 @@ export const listingsService = {
           schema: 'public', 
           table: 'listings' 
         },
-        (payload) => {
+        (payload: any) => {
           callback(payload.new as Listing);
         }
       )
@@ -170,7 +170,7 @@ export const listingsService = {
           table: 'listings',
           filter: `user_id=eq.${userId}`
         },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'INSERT') {
             callback(payload.new as Listing);
           }
