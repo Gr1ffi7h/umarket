@@ -13,7 +13,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { ConversationList } from '@/components/ConversationList';
 import { ChatInterface } from '@/components/ChatInterface';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth-supabase';
 
 export default function MessagesPage() {
   const params = useParams();
@@ -26,13 +26,22 @@ export default function MessagesPage() {
   const conversationId = params.conversationId as string;
 
   useEffect(() => {
-    const checkAuth = () => {
-      const currentUser = auth.getCurrentUser();
+    const checkAuth = async () => {
+      const currentUser = await auth.getCurrentUser();
       setUser(currentUser);
       setLoading(false);
     };
 
     checkAuth();
+
+    // Listen to auth state changes
+    const { data: authListener } = auth.onAuthStateChange((user) => {
+      setUser(user);
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, [conversationId, router]);
 
   if (loading) {

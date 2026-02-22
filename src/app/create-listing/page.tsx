@@ -10,7 +10,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth-supabase';
+import { listingsService } from '@/lib/listings';
 import { AuthGuard } from '@/components/AuthGuard';
 
 function CreateListingContent() {
@@ -35,33 +36,29 @@ function CreateListingContent() {
 
     try {
       // Get current user
-      const currentUser = auth.getCurrentUser();
+      const currentUser = await auth.getCurrentUser();
       if (!currentUser) {
         throw new Error('Not authenticated');
       }
 
       // Create new listing
-      const newListing = {
-        id: Date.now().toString(),
+      const newListing = await listingsService.createListing({
         title: formData.title,
         price: parseFloat(formData.price),
         description: formData.description,
         category: formData.category,
         condition: formData.condition,
         location: formData.location,
-        userId: currentUser.id,
-        sellerName: currentUser.fullName,
-        createdAt: new Date().toISOString(),
+        user_id: currentUser.id,
         status: 'active'
-      };
+      });
 
-      // Save to localStorage
-      const listings = JSON.parse(localStorage.getItem('umarket_listings') || '[]');
-      listings.push(newListing);
-      localStorage.setItem('umarket_listings', JSON.stringify(listings));
-
-      // Redirect to my listings
-      window.location.href = '/my-listings';
+      if (newListing) {
+        // Redirect to my listings
+        window.location.href = '/my-listings';
+      } else {
+        alert('Failed to create listing. Please try again.');
+      }
     } catch (error) {
       console.error('Error creating listing:', error);
       alert('Failed to create listing. Please try again.');

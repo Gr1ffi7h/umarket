@@ -13,11 +13,11 @@ import { Button } from '@/components/Button';
 import { ClientHeader } from '@/components/ClientHeader';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { auth } from '@/lib/auth';
-import { data, type Listing } from '@/lib/data';
+import { auth } from '@/lib/auth-supabase';
+import { listingsService } from '@/lib/listings';
 
 function BrowsePage() {
-  const [listings, setListings] = useState<Listing[]>([]);
+  const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedCondition, setSelectedCondition] = useState('All');
@@ -26,16 +26,30 @@ function BrowsePage() {
   const conditions = ['All', 'New', 'Like New', 'Good', 'Fair'];
 
   useEffect(() => {
-    // Check authentication
-    if (!auth.isAuthenticated()) {
-      window.location.href = '/login';
-      return;
-    }
+    const loadListings = async () => {
+      // Check authentication
+      const isAuth = await auth.isAuthenticated();
+      if (!isAuth) {
+        window.location.href = '/login';
+        return;
+      }
 
-    // Load listings from local storage
-    const localListings = data.getListings();
-    setListings(localListings);
-    setLoading(false);
+      // Load listings from database
+      const allListings = await listingsService.getListings();
+      setListings(allListings);
+      setLoading(false);
+    };
+
+    loadListings();
+
+    // Set up real-time subscription
+    const subscription = listingsService.subscribeToListings((newListing) => {
+      setListings(prev => [newListing, ...prev]);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const filteredListings = listings.filter(listing => {

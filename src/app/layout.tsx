@@ -9,8 +9,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../styles/globals.css';
-import { Navigation } from '@/components/Navigation';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { Navigation } from '@/components/Navigation-supabase';
+import { MobileBottomNav } from '@/components/MobileBottomNav-supabase';
 
 // Optimize font loading
 const inter = Inter({

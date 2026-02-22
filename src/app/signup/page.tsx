@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth-supabase';
 
 /**
  * Form validation for .edu email addresses
