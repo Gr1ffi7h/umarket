@@ -94,8 +94,12 @@ export const auth = {
       }
 
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
+      // Handle network/fetch errors
+      if (error.message?.includes('fetch') || error.message?.includes('network')) {
+        return { success: false, error: 'Failed to fetch. Check your Supabase URL and anon key.' };
+      }
       return { success: false, error: 'Registration failed' };
     }
   },
@@ -121,8 +125,12 @@ export const auth = {
       }
 
       return null;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      // Handle network/fetch errors
+      if (error.message?.includes('fetch') || error.message?.includes('network')) {
+        console.error('Network error detected - check Supabase configuration');
+      }
       return null;
     }
   },
