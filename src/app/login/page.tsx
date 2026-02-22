@@ -23,6 +23,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +33,7 @@ function LoginForm() {
 
     try {
       const user = await auth.signIn(email, password);
-
+      
       if (user) {
         router.push("/browse");
       } else {
@@ -68,19 +69,35 @@ function LoginForm() {
         />
       </div>
 
-      <div>
+      <div className="relative">
         <label htmlFor="password" className="block text-sm font-medium text-text-primary-light dark:text-text-primary-dark mb-1">
           Password
         </label>
         <input
           id="password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full px-4 py-3 border border-gray-300 dark:border-primary-600 rounded-lg bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark placeholder-text-secondary-light dark:placeholder-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent active:scale-95 transition-transform duration-150"
-          placeholder="•••••••••"
+          placeholder="••••••••"
           required
         />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none"
+        >
+          {showPassword ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-2a10.025 10.025 0 01-9.543 2c-1.275 1.275-2.943 2-9.543 2a10.025 10.025 0 019.543-2c1.275-1.275 2.943-2 9.543-2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM7.076 16.337c-1.524-1.062-2.572-1.864-4-2.34v-2.932c0-1.476.372-2.885 1.012-3.972l-.003-.217c-.823.702-1.488 1.592-1.875 2.628-.388 1.036-.89 1.875-1.875 2.628 1.012 1.087 1.488 2.496 1.875 3.972l.003.217z" />
+            </svg>
+          )}
+        </button>
       </div>
 
       <Button

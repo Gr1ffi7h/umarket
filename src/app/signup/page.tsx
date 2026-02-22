@@ -38,6 +38,8 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -48,25 +50,21 @@ export default function SignUpPage() {
    */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   /**
-   * Validate form data
+   * Validate form inputs
    */
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     // Name validation
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+      newErrors.name = 'Full name is required';
     }
 
     // Email validation
@@ -108,18 +106,19 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const result = await auth.signUp(formData.name, formData.email, formData.password);
+      const result = await auth.signUp(formData.email, formData.password, formData.name);
       
       if (result.success) {
-        // Redirect to browse on successful registration
-        window.location.href = '/browse';
+        // Redirect to login page on successful signup
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?message=signup-success';
+        }
       } else {
-        // Show error message
         setErrors({ submit: result.error || 'Registration failed. Please try again.' });
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({ submit: 'Registration failed. Please try again.' });
+      console.error('Signup error:', error);
+      setErrors({ submit: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -127,33 +126,26 @@ export default function SignUpPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mx-auto mb-4"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-64 mx-auto"></div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Create Your Account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Join the exclusive marketplace for college students
+    <div className="min-h-screen bg-white dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Create Account
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Join the university marketplace
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
-          <div className="space-y-4">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Field */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -166,7 +158,7 @@ export default function SignUpPage() {
                 autoComplete="name"
                 required
                 className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
-                placeholder="Enter your full name"
+                placeholder="John Doe"
                 value={formData.name}
                 onChange={handleInputChange}
                 aria-describedby={errors.name ? 'name-error' : undefined}
@@ -181,7 +173,7 @@ export default function SignUpPage() {
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email Address
+                Email
               </label>
               <input
                 id="email"
@@ -210,18 +202,36 @@ export default function SignUpPage() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
-                placeholder="Create a password"
-                value={formData.password}
-                onChange={handleInputChange}
-                aria-describedby={errors.password ? 'password-error' : undefined}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
+                  placeholder="Create a password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  aria-describedby={errors.password ? 'password-error' : undefined}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-2a10.025 10.025 0 01-9.543 2c-1.275 1.275-2.943 2-9.543 2a10.025 10.025 0 019.543-2c1.275-1.275 2.943-2 9.543-2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM7.076 16.337c-1.524-1.062-2.572-1.864-4-2.34v-2.932c0-1.476.372-2.885 1.012-3.972l-.003-.217c-.823.702-1.488 1.592-1.875 2.628-.388 1.036-.89 1.875-1.875 2.628 1.012 1.087 1.488 2.496 1.875 3.972l.003.217z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {errors.password && (
                 <p id="password-error" className="mt-1 text-sm text-red-600" role="alert">
                   {errors.password}
@@ -234,36 +244,52 @@ export default function SignUpPage() {
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Confirm Password
               </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
+                  placeholder="Confirm password"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none"
+                >
+                  {showConfirmPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-2a10.025 10.025 0 01-9.543 2c-1.275 1.275-2.943 2-9.543 2a10.025 10.025 0 019.543-2c1.275-1.275 2.943-2 9.543-2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM7.076 16.337c-1.524-1.062-2.572-1.864-4-2.34v-2.932c0-1.476.372-2.885 1.012-3.972l-.003-.217c-.823.702-1.488 1.592-1.875 2.628-.388 1.036-.89 1.875-1.875 2.628 1.012 1.087 1.488 2.496 1.875 3.972l.003.217z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <p id="confirmPassword-error" className="mt-1 text-sm text-red-600" role="alert">
                   {errors.confirmPassword}
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Submit Error */}
-          {errors.submit && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
-              <p className="text-sm text-red-800 dark:text-red-200" role="alert">
-                {errors.submit}
-              </p>
-            </div>
-          )}
+            {/* Submit Error */}
+            {errors.submit && (
+              <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
+                <p className="text-sm text-red-800 dark:text-red-200" role="alert">
+                  {errors.submit}
+                </p>
+              </div>
+            )}
 
-          <div>
             <Button
               type="submit"
               variant="primary"
@@ -274,20 +300,20 @@ export default function SignUpPage() {
             >
               {isSubmitting ? 'Creating Account...' : 'Sign Up'}
             </Button>
-          </div>
+          </form>
 
-          <div className="text-center">
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
-              <Link
-                href="/login"
+              <Link 
+                href="/login" 
                 className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
               >
                 Sign in
               </Link>
             </p>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
