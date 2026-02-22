@@ -127,7 +127,7 @@ function LoginForm() {
         variant="primary"
         size="lg"
         className="w-full py-3 active:scale-95 transition-transform duration-150"
-        disabled={loading}
+        disabled={loading || password.length < MIN_PASSWORD_LENGTH || !email}
       >
         {loading ? 'Signing in...' : 'Sign In'}
       </Button>

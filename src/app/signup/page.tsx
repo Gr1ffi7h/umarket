@@ -308,7 +308,7 @@ export default function SignUpPage() {
               variant="primary"
               size="lg"
               loading={isSubmitting}
-              disabled={isSubmitting}
+              disabled={isSubmitting || formData.password.length < MIN_PASSWORD_LENGTH || !formData.email || !formData.name || !formData.confirmPassword}
               className="w-full py-3 active:scale-95 transition-transform duration-150"
             >
               {isSubmitting ? 'Creating Account...' : 'Sign Up'}
