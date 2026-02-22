@@ -10,23 +10,24 @@
 import { useState } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
-import { auth } from '@/lib/auth-supabase';
-import { listingsService } from '@/lib/listings';
-import { AuthGuard } from '@/components/AuthGuard';
+import { useAuth } from '@/context/AuthContext';
+import { ProtectedPage } from '@/components/ProtectedPage';
+import { ListingsService } from '@/lib/listings';
 
-// Prevent static generation during build
 export const dynamic = "force-dynamic";
 
 function CreateListingContent() {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     price: '',
     description: '',
-    category: '',
-    condition: '',
-    location: ''
+    category: 'Electronics',
+    condition: 'New',
+    images: [] as string[]
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -36,200 +37,177 @@ function CreateListingContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
+
+    if (!user) {
+      setError('You must be logged in to create a listing');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      // Get current user
-      const currentUser = await auth.getCurrentUser();
-      if (!currentUser) {
-        throw new Error('Not authenticated');
-      }
-
-      // Create new listing
-      const newListing = await listingsService.createListing({
-        title: formData.title,
+      await ListingsService.createListing({
+        title: formData.title.trim(),
         price: parseFloat(formData.price),
-        description: formData.description,
+        description: formData.description.trim(),
         category: formData.category,
         condition: formData.condition,
-        location: formData.location,
-        user_id: currentUser.id,
+        images: formData.images,
+        user_id: user.id,
         status: 'active'
-      });
-
-      if (newListing) {
-        // Redirect to my listings
-        if (typeof window !== 'undefined') {
-          window.location.href = '/my-listings';
-        }
-      } else {
-        if (typeof window !== 'undefined') {
-          alert('Failed to create listing. Please try again.');
-        }
-      }
+      } as any);
+      
+      // Redirect to my listings
+      window.location.href = '/my-listings';
     } catch (error) {
       console.error('Error creating listing:', error);
-      if (typeof window !== 'undefined') {
-        alert('Failed to create listing. Please try again.');
-      }
+      setError('Failed to create listing. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const categories = ['Electronics', 'Books', 'Furniture', 'Clothing', 'Appliances', 'Other'];
+  const conditions = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
+
   return (
-    <div className="max-w-2xl mx-auto py-12 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Listing</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Post an item for students at your campus.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Create Listing
+          </h1>
 
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              required
-              value={formData.title}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
-              placeholder="What are you selling?"
-            />
-          </div>
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded text-red-800 dark:text-red-200">
+              {error}
+            </div>
+          )}
 
-          {/* Price */}
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Price *
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
-                $
-              </span>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Title */}
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Title *
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="What are you selling?"
+              />
+            </div>
+
+            {/* Price */}
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Price ($) *
+              </label>
               <input
                 type="number"
                 id="price"
                 name="price"
-                required
-                step="0.01"
-                min="0"
                 value={formData.price}
                 onChange={handleInputChange}
-                className="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
+                required
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0.00"
               />
             </div>
-          </div>
 
-          {/* Category */}
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Category *
-            </label>
-            <select
-              id="category"
-              name="category"
-              required
-              value={formData.category}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
-            >
-              <option value="">Select a category</option>
-              <option value="electronics">Electronics</option>
-              <option value="textbooks">Textbooks</option>
-              <option value="furniture">Furniture</option>
-              <option value="clothing">Clothing</option>
-              <option value="sports">Sports & Outdoors</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          {/* Condition */}
-          <div>
-            <label htmlFor="condition" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Condition *
-            </label>
-            <select
-              id="condition"
-              name="condition"
-              required
-              value={formData.condition}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
-            >
-              <option value="">Select condition</option>
-              <option value="new">New</option>
-              <option value="like-new">Like New</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
-            </select>
-          </div>
-
-          {/* Location */}
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Location *
-            </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              required
-              value={formData.location}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
-              placeholder="Campus or general area"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description *
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              required
-              rows={4}
-              value={formData.description}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
-              placeholder="Describe your item in detail..."
-            />
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex gap-4">
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              disabled={isSubmitting}
-              className="flex-1 py-3 active:scale-95 transition-transform duration-150"
-            >
-              {isSubmitting ? 'Creating...' : 'Create Listing'}
-            </Button>
-            
-            <Link href="/my-listings">
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
+            {/* Category */}
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Category *
+              </label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                Cancel
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Condition */}
+            <div>
+              <label htmlFor="condition" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Condition *
+              </label>
+              <select
+                id="condition"
+                name="condition"
+                value={formData.condition}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {conditions.map((condition) => (
+                  <option key={condition} value={condition}>
+                    {condition}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description *
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                required
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Describe your item (condition, features, etc.)"
+              />
+            </div>
+
+            {/* Images */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Images (Coming Soon)
+              </label>
+              <div className="w-full px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-center text-gray-500 dark:text-gray-400">
+                <p>Image upload will be available soon</p>
+                <p className="text-sm mt-2">For now, listings will be created without images</p>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex gap-4">
+              <Button
+                type="submit"
+                disabled={isSubmitting || !formData.title.trim() || !formData.price || !formData.description.trim()}
+                className="flex-1"
+              >
+                {isSubmitting ? 'Creating...' : 'Create Listing'}
               </Button>
-            </Link>
-          </div>
-        </form>
+              <Link href="/browse">
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </Link>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -237,8 +215,8 @@ function CreateListingContent() {
 
 export default function CreateListingPage() {
   return (
-    <AuthGuard>
+    <ProtectedPage>
       <CreateListingContent />
-    </AuthGuard>
+    </ProtectedPage>
   );
 }

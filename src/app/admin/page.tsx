@@ -1,18 +1,16 @@
 /**
- * Admin Panel - Client Component
+ * Admin Panel - Secure Admin Interface
  * 
- * Admin interface for managing users, listings, and conversations
- * Uses localStorage for data persistence and session management
+ * Only accessible by designated admin account
+ * Full management capabilities for users, listings, and conversations
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
-import { redirect } from 'next/navigation';
-import { AdminDashboard } from '@/components/AdminDashboard';
-import { auth } from '@/lib/auth-supabase';
-import { AuthGuard } from '@/components/AuthGuard';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
+import { ProtectedPage } from '@/components/ProtectedPage';
+import { supabase } from '@/lib/supabaseClient';
 
 // Prevent static generation during build
 export const dynamic = "force-dynamic";
@@ -20,6 +18,7 @@ export const dynamic = "force-dynamic";
 interface User {
   id: string;
   full_name: string;
+  email: string;
   role: string;
   created_at: string;
 }
@@ -34,13 +33,16 @@ interface Listing {
   profiles: {
     id: string;
     full_name: string;
+    email: string;
   };
 }
 
 interface Conversation {
   id: string;
+  participant1_id: string;
+  participant2_id: string;
   created_at: string;
-  messages: { count: number }[];
+  last_message_at: string;
 }
 
 function AdminPanelContent() {
@@ -48,131 +50,187 @@ function AdminPanelContent() {
     users: User[];
     listings: Listing[];
     conversations: Conversation[];
-    currentUserId: string;
-  } | null>(null);
+  }>({
+    users: [],
+    listings: [],
+    conversations: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const loadAdminData = async () => {
+    const checkAdminAccess = async () => {
+      if (!user) {
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      // Check if user is the designated admin
+      const isAdmin = user.email === 'Admin@uni.edu' && user.user_metadata?.name === 'Admin';
+      
+      if (!isAdmin) {
+        setError('Access denied. Admin privileges required.');
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Check authentication using Supabase
-        const { data: sessionData } = await supabase.auth.getSession();
-        
-        if (!sessionData.session) {
-          setError('Not authenticated');
-          setLoading(false);
-          return;
-        }
-
-        const currentUser = await auth.getCurrentUser();
-        
-        if (!currentUser) {
-          setError('Not authenticated');
-          setLoading(false);
-          return;
-        }
-
-        // For demo purposes, we'll consider first user as admin
-        // In a real app, you'd have a role field in user object
-        const { data: users } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: true });
-          
-        const isAdmin = users && users.length > 0 && users[0].id === currentUser.id;
-        
-        if (!isAdmin) {
-          setError('Access denied. Admin privileges required.');
-          setLoading(false);
-          return;
-        }
-
-        // Load data from Supabase
-        const { data: listings } = await supabase
-          .from('listings')
-          .select('*');
-          
-        const { data: conversations } = await supabase
-          .from('conversations')
-          .select('*');
+        // Fetch admin data
+        const [usersData, listingsData, conversationsData] = await Promise.all([
+          supabase.from('profiles').select('*').order('created_at', { ascending: true }),
+          supabase.from('listings').select('*, profiles(*)').order('created_at', { ascending: false }),
+          supabase.from('conversations').select('*').order('created_at', { ascending: false })
+        ]);
 
         setAdminData({
-          users: users?.map((u: any) => ({
+          users: usersData.data?.map((u: any) => ({
             id: u.id,
             full_name: u.full_name,
+            email: u.email,
             role: u.role || 'user',
             created_at: u.created_at
           })) || [],
-          listings: listings?.map((l: any) => ({
-            id: l.id,
-            title: l.title,
-            price: l.price,
-            description: l.description,
-            user_id: l.user_id,
-            created_at: l.created_at,
-            profiles: {
-              id: l.user_id,
-              full_name: l.seller_name || 'Unknown'
-            }
-          })) || [],
-          conversations: conversations?.map((c: any) => ({
-            id: c.id,
-            created_at: c.created_at,
-            messages: [{ count: c.message_count || 0 }]
-          })) || [],
-          currentUserId: currentUser.id
+          listings: listingsData.data || [],
+          conversations: conversationsData.data || []
         });
       } catch (err) {
-        console.error('Admin data loading error:', err);
         setError('Failed to load admin data');
       } finally {
         setLoading(false);
       }
     };
 
-    loadAdminData();
-  }, []);
+    checkAdminAccess();
+  }, [user]);
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await supabase.from('profiles').delete().eq('id', userId);
+      setAdminData(prev => ({
+        ...prev,
+        users: prev.users.filter(u => u.id !== userId)
+      }));
+    } catch (error) {
+      setError('Failed to delete user');
+    }
+  };
+
+  const handleDeleteListing = async (listingId: string) => {
+    try {
+      await supabase.from('listings').delete().eq('id', listingId);
+      setAdminData(prev => ({
+        ...prev,
+        listings: prev.listings.filter(l => l.id !== listingId)
+      }));
+    } catch (error) {
+      setError('Failed to delete listing');
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600 dark:text-gray-300">{error}</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-600 text-center">
+          <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
+          <p>{error}</p>
         </div>
       </div>
     );
   }
 
-  if (!adminData) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-600 mb-4">No Data Available</h1>
-          <p className="text-gray-500">Unable to load admin dashboard data.</p>
-        </div>
-      </div>
-    );
-  }
-  
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">Manage users, listings, and conversations</p>
-        </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Admin Panel</h1>
         
-        <AdminDashboard />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Users Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+              Users ({adminData.users.length})
+            </h2>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {adminData.users.map((user) => (
+                <div key={user.id} className="border-b border-gray-200 dark:border-gray-700 pb-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{user.full_name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                      <p className="text-xs text-gray-400">Role: {user.role}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Listings Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+              Listings ({adminData.listings.length})
+            </h2>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {adminData.listings.map((listing) => (
+                <div key={listing.id} className="border-b border-gray-200 dark:border-gray-700 pb-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{listing.title}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        ${listing.price} by {listing.profiles?.full_name}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteListing(listing.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Conversations Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+              Conversations ({adminData.conversations.length})
+            </h2>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {adminData.conversations.map((conversation) => (
+                <div key={conversation.id} className="border-b border-gray-200 dark:border-gray-700 pb-3">
+                  <div className="text-sm">
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Conversation {conversation.id}
+                    </p>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Between: {conversation.participant1_id} & {conversation.participant2_id}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Last message: {new Date(conversation.last_message_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -180,8 +238,8 @@ function AdminPanelContent() {
 
 export default function AdminPage() {
   return (
-    <AuthGuard>
+    <ProtectedPage>
       <AdminPanelContent />
-    </AuthGuard>
+    </ProtectedPage>
   );
 }

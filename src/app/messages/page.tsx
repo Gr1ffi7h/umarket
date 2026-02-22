@@ -13,7 +13,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { ConversationList } from '@/components/ConversationList';
 import { ChatInterface } from '@/components/ChatInterface';
-import { auth } from '@/lib/auth-supabase';
+import { useAuth } from '@/context/AuthContext';
 
 // Prevent static generation during build
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 export default function MessagesPage() {
   const params = useParams();
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [conversation, setConversation] = useState<any>(null);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -29,21 +29,13 @@ export default function MessagesPage() {
   const conversationId = params.conversationId as string;
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const currentUser = await auth.getCurrentUser();
-      setUser(currentUser);
+    if (!session) {
+      setAccessDenied(true);
       setLoading(false);
-    };
-
-    checkAuth();
-
-    // Listen to auth state changes
-    const { data: authListener } = auth.onAuthStateChange((user) => {
-      setUser(user);
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
+      return;
+    }
+    setLoading(false);
+  }, [session]);
     };
   }, [conversationId, router]);
 

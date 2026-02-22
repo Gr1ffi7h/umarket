@@ -11,7 +11,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth } from '@/lib/auth-supabase';
+import { useAuth } from '@/context/AuthContext';
+import { MessagingService, Conversation as ConversationType } from '@/lib/messaging';
 
 interface Conversation {
   id: string;
@@ -27,29 +28,48 @@ interface ConversationListProps {
 }
 
 export function ConversationList({ userId }: ConversationListProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<ConversationType[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Load conversations - empty for now
-    setConversations([]);
-    setLoading(false);
-  }, []);
+    if (!user) return;
 
-  const fetchConversations = async () => {
-    try {
-      const response = await fetch('/api/conversations');
-      const data = await response.json();
-      
-      if (data.conversations) {
-        setConversations(data.conversations);
+    const loadConversations = async () => {
+      try {
+        const convs = await MessagingService.getConversations(user.id);
+        setConversations(convs);
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    loadConversations();
+
+    // Subscribe to real-time updates
+    const subscription = MessagingService.subscribeToConversations(user.id, (updatedConv) => {
+      setConversations(prev => {
+        const index = prev.findIndex(c => c.id === updatedConv.id);
+        if (index >= 0) {
+          const newConvs = [...prev];
+          newConvs[index] = updatedConv;
+          return newConvs.sort((a, b) => 
+            new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
+          );
+        } else {
+          return [updatedConv, ...prev].sort((a, b) => 
+            new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
+          );
+        }
+      });
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user]);
 
   const getOtherParticipant = (conversation: Conversation) => {
     // Simplified for now - return placeholder data

@@ -8,8 +8,7 @@
 
 'use client';
 
-import { auth } from '@/lib/auth-supabase';
-import { MinimalNav } from '@/components/MinimalNav';
+import { ThemeToggle } from './ThemeToggle';
 
 /**
  * Minimal Client Header Component
@@ -18,5 +17,5 @@ import { MinimalNav } from '@/components/MinimalNav';
  * Maintains SSR compatibility with dynamic imports
  */
 export function ClientHeader() {
-  return <MinimalNav />;
+  return <ThemeToggle />;
 }
