@@ -12,7 +12,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { Button } from '@/components/Button';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 function SearchParamsWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
@@ -31,11 +31,6 @@ function LoginForm() {
     setError('');
 
     try {
-      if (!supabase) {
-        setError('Database connection failed');
-        return;
-      }
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -44,7 +39,7 @@ function LoginForm() {
       if (error) {
         setError(error.message);
       } else {
-        router.push('/messages');
+        router.push("/browse");
       }
     } catch (err) {
       setError('An unexpected error occurred');

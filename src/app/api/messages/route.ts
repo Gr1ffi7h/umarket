@@ -19,9 +19,8 @@ export async function GET(request: NextRequest) {
   try {
     // Defensive check for Supabase admin client
     if (!supabaseAdmin) {
-      console.error('Supabase admin client not initialized');
       return NextResponse.json(
-        { error: 'Database connection failed' },
+        { error: 'Supabase configuration error' },
         { status: 500 }
       );
     }
@@ -84,9 +83,8 @@ export async function POST(request: NextRequest) {
   try {
     // Defensive check for Supabase admin client
     if (!supabaseAdmin) {
-      console.error('Supabase admin client not initialized');
       return NextResponse.json(
-        { error: 'Database connection failed' },
+        { error: 'Supabase configuration error' },
         { status: 500 }
       );
     }

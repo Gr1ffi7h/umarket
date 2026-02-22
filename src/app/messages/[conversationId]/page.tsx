@@ -12,8 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { ChatInterface } from '@/components/ChatInterface';
-import { getCurrentUser } from '@/lib/supabase';
-import { Conversation } from '@/lib/supabase';
+import { getCurrentUser, Conversation } from '@/lib/supabase';
 
 export default function ConversationPage() {
   const params = useParams();
