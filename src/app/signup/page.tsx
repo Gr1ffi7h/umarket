@@ -12,6 +12,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
@@ -42,10 +44,19 @@ export default function SignUpPage() {
   const [mounted, setMounted] = React.useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const router = useRouter();
+  const { session } = useAuth();
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (session) {
+      router.replace('/browse');
+    }
+  }, [session, router]);
 
   /**
    * Handle form input changes
@@ -124,10 +135,8 @@ export default function SignUpPage() {
       if (!res.ok) {
         setErrors({ submit: data.error || 'Sign Up failed' });
       } else {
-        // Redirect to login page on successful signup
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login?message=signup-success';
-        }
+        // Auto-login after successful signup and redirect to browse
+        router.replace('/browse');
       }
     } catch (error) {
       console.error('Signup error:', error);

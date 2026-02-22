@@ -10,49 +10,23 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/auth-supabase';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 import { ThemeToggle } from './ThemeToggle';
 
 export function Navigation() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { session, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // Get initial session
-    const initializeAuth = async () => {
-      try {
-        const currentUser = await auth.getCurrentUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Listen to auth state changes
-    const { data: authListener } = auth.onAuthStateChange((user) => {
-      setUser(user);
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, [router]);
-
   const handleProtectedNav = (e: React.MouseEvent, href: string) => {
-    if (!user) {
+    if (!session) {
       e.preventDefault();
       router.push(`/login?returnTo=${encodeURIComponent(href)}`);
     }
   };
 
   const handleLogout = async () => {
-    await auth.signOut();
+    await supabase.auth.signOut();
     router.push('/');
   };
 
@@ -127,7 +101,7 @@ export function Navigation() {
                 </Link>
               </div>
 
-              {user ? (
+              {session ? (
                 <div className="flex items-center space-x-4">
                   <Link
                     href="/my-listings"

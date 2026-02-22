@@ -12,6 +12,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { Button } from '@/components/Button';
+import { useAuth } from '@/context/AuthContext';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
@@ -27,6 +28,14 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const { session } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (session) {
+      router.replace('/browse');
+    }
+  }, [session, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

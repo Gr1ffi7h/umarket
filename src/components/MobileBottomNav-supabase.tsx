@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/auth-supabase';
+import { useAuth } from '@/context/AuthContext';
 import { 
   Home, 
   PlusCircle, 
@@ -20,37 +20,11 @@ import {
 } from 'lucide-react';
 
 export function MobileBottomNav() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { session, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const currentUser = await auth.getCurrentUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Listen to auth state changes
-    const { data: authListener } = auth.onAuthStateChange((user) => {
-      setUser(user);
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, [router]);
-
   const handleProtectedNav = (e: React.MouseEvent, href: string) => {
-    if (!user) {
+    if (!session) {
       e.preventDefault();
       router.push(`/login?returnTo=${encodeURIComponent(href)}`);
     }
@@ -94,7 +68,7 @@ export function MobileBottomNav() {
         </Link>
 
         {/* Profile */}
-        {user ? (
+        {session ? (
           <Link
             href="/profile"
             className="flex flex-col items-center py-2 px-3 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors active:scale-95 duration-150"
