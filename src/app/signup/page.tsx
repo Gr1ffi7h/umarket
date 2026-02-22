@@ -165,9 +165,7 @@ export default function SignUpPage() {
                 type="text"
                 autoComplete="name"
                 required
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
                 placeholder="Enter your full name"
                 value={formData.name}
                 onChange={handleInputChange}
@@ -191,9 +189,7 @@ export default function SignUpPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
                 placeholder="your.email@university.edu"
                 value={formData.email}
                 onChange={handleInputChange}
@@ -220,9 +216,7 @@ export default function SignUpPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 ${
-                  errors.password ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
                 placeholder="Create a password"
                 value={formData.password}
                 onChange={handleInputChange}
@@ -246,9 +240,7 @@ export default function SignUpPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 ${
-                  errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="mt-1 block w-full px-4 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 active:scale-95 transition-transform duration-150"
                 placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
@@ -278,7 +270,7 @@ export default function SignUpPage() {
               size="lg"
               loading={isSubmitting}
               disabled={isSubmitting}
-              className="w-full"
+              className="w-full py-3 active:scale-95 transition-transform duration-150"
             >
               {isSubmitting ? 'Creating Account...' : 'Sign Up'}
             </Button>

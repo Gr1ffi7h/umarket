@@ -88,7 +88,7 @@ function BrowsePage() {
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
       <ClientHeader />
       
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-screen-xl mx-auto px-4 py-6">
         {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -96,30 +96,38 @@ function BrowsePage() {
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="mb-6"
         >
-          <div className="flex flex-wrap gap-2 mb-4">
-            <div className="flex flex-wrap gap-2">
-              {categories.map(category => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </Button>
-              ))}
+          <div className="flex flex-col gap-4 mb-4">
+            <div>
+              <h3 className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark mb-2">Category</h3>
+              <div className="flex flex-wrap gap-2">
+                {categories.map(category => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'primary' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category)}
+                    className="active:scale-95 transition-transform duration-150"
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {conditions.map(condition => (
-                <Button
-                  key={condition}
-                  variant={selectedCondition === condition ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedCondition(condition)}
-                >
-                  {condition}
-                </Button>
-              ))}
+            <div>
+              <h3 className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark mb-2">Condition</h3>
+              <div className="flex flex-wrap gap-2">
+                {conditions.map(condition => (
+                  <Button
+                    key={condition}
+                    variant={selectedCondition === condition ? 'primary' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCondition(condition)}
+                    className="active:scale-95 transition-transform duration-150"
+                  >
+                    {condition}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>
@@ -137,7 +145,7 @@ function BrowsePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: "easeOut", delay: index * 0.05 }}
-              className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-primary-700 rounded p-3 hover:shadow-lg"
+              className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-primary-700 rounded-xl p-4 md:hover:shadow-lg transition-all duration-200 active:scale-95"
             >
               <div className="w-full h-24 bg-gray-200 dark:bg-primary-800 rounded mb-3 flex items-center justify-center">
                 {listing.image ? (

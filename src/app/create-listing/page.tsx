@@ -93,7 +93,7 @@ function CreateListingContent() {
               required
               value={formData.title}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
               placeholder="What are you selling?"
             />
           </div>
@@ -116,7 +116,7 @@ function CreateListingContent() {
                 min="0"
                 value={formData.price}
                 onChange={handleInputChange}
-                className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
                 placeholder="0.00"
               />
             </div>
@@ -133,7 +133,7 @@ function CreateListingContent() {
               required
               value={formData.category}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
             >
               <option value="">Select a category</option>
               <option value="electronics">Electronics</option>
@@ -156,7 +156,7 @@ function CreateListingContent() {
               required
               value={formData.condition}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
             >
               <option value="">Select condition</option>
               <option value="new">New</option>
@@ -179,7 +179,7 @@ function CreateListingContent() {
               required
               value={formData.location}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
               placeholder="Campus or general area"
             />
           </div>
@@ -196,7 +196,7 @@ function CreateListingContent() {
               rows={4}
               value={formData.description}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white active:scale-95 transition-transform duration-150"
               placeholder="Describe your item in detail..."
             />
           </div>
@@ -208,7 +208,7 @@ function CreateListingContent() {
               variant="primary"
               size="lg"
               disabled={isSubmitting}
-              className="flex-1"
+              className="flex-1 py-3 active:scale-95 transition-transform duration-150"
             >
               {isSubmitting ? 'Creating...' : 'Create Listing'}
             </Button>

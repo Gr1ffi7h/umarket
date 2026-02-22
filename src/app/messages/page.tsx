@@ -81,11 +81,25 @@ export default function MessagesPage() {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900">
         <ClientHeader />
-        <ChatInterface
-          conversationId={conversationId}
-          currentUserId={user.id}
-          conversation={conversation}
-        />
+        <div className="flex flex-col md:flex-row h-[calc(100vh-64px)]">
+          {/* Mobile: Full screen chat */}
+          <div className="flex-1 md:hidden">
+            <ChatInterface
+              conversationId={conversationId}
+              currentUserId={user.id}
+              conversation={conversation}
+            />
+          </div>
+          
+          {/* Desktop: Two-column layout */}
+          <div className="hidden md:flex md:flex-1">
+            <ChatInterface
+              conversationId={conversationId}
+              currentUserId={user.id}
+              conversation={conversation}
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -94,7 +108,29 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <ClientHeader />
-      <ConversationList userId={user.id} />
+      <div className="flex flex-col md:flex-row h-[calc(100vh-64px)]">
+        {/* Mobile: Full screen conversation list */}
+        <div className="flex-1 md:hidden">
+          <ConversationList userId={user.id} />
+        </div>
+        
+        {/* Desktop: Two-column layout with conversation list */}
+        <div className="hidden md:flex md:w-96 md:border-r md:border-gray-200 md:dark:border-gray-700">
+          <ConversationList userId={user.id} />
+        </div>
+        
+        {/* Desktop: Chat area placeholder */}
+        <div className="hidden md:flex md:flex-1 items-center justify-center">
+          <div className="text-center">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              Select a conversation
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Choose a conversation from the list to start messaging
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

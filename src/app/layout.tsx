@@ -10,6 +10,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '../styles/globals.css';
 import { Navigation } from '@/components/Navigation';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 
 // Optimize font loading
 const inter = Inter({
@@ -100,7 +101,7 @@ export default function RootLayout({
         <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
       </head>
-      <body className="min-h-screen bg-background font-sans antialiased">
+      <body className="min-h-screen bg-background font-sans antialiased overflow-x-hidden">
         {/* Skip to main content for accessibility */}
         <a
           href="#main-content"
@@ -110,9 +111,12 @@ export default function RootLayout({
         </a>
         
         <Navigation />
-        <main id="main-content" className="relative">
+        <main id="main-content" className="relative flex-1 pb-16 md:pb-0">
           {children}
         </main>
+        
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav />
         
         {/* Footer or global components can go here */}
       </body>

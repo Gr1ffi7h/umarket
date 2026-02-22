@@ -62,7 +62,7 @@ function LoginForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-primary-600 rounded-lg bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark placeholder-text-secondary-light dark:placeholder-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-primary-600 rounded-lg bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark placeholder-text-secondary-light dark:placeholder-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent active:scale-95 transition-transform duration-150"
           placeholder="your.email@university.edu"
           required
         />
@@ -77,8 +77,8 @@ function LoginForm() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-primary-600 rounded-lg bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark placeholder-text-secondary-light dark:placeholder-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          placeholder="••••••••••"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-primary-600 rounded-lg bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark placeholder-text-secondary-light dark:placeholder-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent active:scale-95 transition-transform duration-150"
+          placeholder="•••••••••"
           required
         />
       </div>
@@ -86,8 +86,8 @@ function LoginForm() {
       <Button
         type="submit"
         variant="primary"
-        size="md"
-        className="w-full"
+        size="lg"
+        className="w-full py-3 active:scale-95 transition-transform duration-150"
         disabled={loading}
       >
         {loading ? 'Signing in...' : 'Sign In'}
@@ -115,7 +115,7 @@ export default function LoginPage() {
       <ClientHeader />
       
       <SearchParamsWrapper>
-        <div className="max-w-md mx-auto px-4 py-12">
+        <div className="max-w-sm mx-auto px-4 py-12">
           <div className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-primary-700 rounded-lg p-6">
             <h1 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-6 text-center">
               Sign In

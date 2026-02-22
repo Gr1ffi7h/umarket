@@ -48,6 +48,7 @@ export function Button({
     transition-colors duration-150
     focus:outline-none focus:ring-2 focus:ring-offset-1
     disabled:opacity-50 disabled:cursor-not-allowed
+    active:scale-95
     ${loading ? 'cursor-wait' : ''}
   `;
 
@@ -106,7 +107,7 @@ export function Button({
   const buttonProps = {
     whileHover: { scale: 1.02 },
     whileTap: { scale: 0.98 },
-    transition: { duration: 0.2, ease: "easeOut" }
+    transition: { duration: 0.15, ease: "easeOut" }
   } as any;
 
   if (href) {
