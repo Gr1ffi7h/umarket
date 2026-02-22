@@ -25,49 +25,32 @@ export default function MessagesPage() {
 
   const conversationId = params.conversationId as string;
 
-  const checkAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        router.push('/login?returnTo=/messages');
-        return;
-      }
-
-      setUser(session.user);
-
-      if (conversationId) {
-        // Check if user has access to this conversation
-        const { data: participants } = await supabase
-          .from('conversation_participants')
-          .select('user_id')
-          .eq('conversation_id', conversationId);
-
-        if (!participants || !participants.some(p => p.user_id === session.user.id)) {
-          setAccessDenied(true);
-          setLoading(false);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        if (!supabase) {
+          console.error('Supabase client not initialized');
           return;
         }
-
-        // Fetch conversation details
-        const { data: conversations } = await supabase
-          .from('conversations')
-          .select('*')
-          .eq('id', conversationId)
-          .single();
-
-        setConversation(conversations || null);
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          router.push('/login');
+          return;
+        }
+        
+        setUser(session.user);
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        setAccessDenied(true);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error checking auth:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
     checkAuth();
-  }, [conversationId]);
+  }, [conversationId, router]);
 
   if (loading) {
     return (

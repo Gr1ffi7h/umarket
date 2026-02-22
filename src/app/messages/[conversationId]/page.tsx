@@ -25,38 +25,38 @@ export default function ConversationPage() {
 
   const conversationId = params.conversationId as string;
 
-  const checkAuthAndAccess = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      
-      if (!currentUser) {
-        router.push('/login');
-        return;
-      }
-
-      setUser(currentUser);
-
-      // For now, allow access to authenticated users
-      // TODO: Implement proper conversation participant checking when schema is updated
-
-      // Fetch conversation details
-      const response = await fetch('/api/conversations');
-      const data = await response.json();
-      
-      if (data.conversations) {
-        const conv = data.conversations.find((c: Conversation) => c.id === conversationId);
-        setConversation(conv || null);
-      }
-    } catch (error) {
-      console.error('Error checking auth:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const checkAuthAndAccess = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        
+        if (!currentUser) {
+          router.push('/login');
+          return;
+        }
+
+        setUser(currentUser);
+
+        // For now, allow access to authenticated users
+        // TODO: Implement proper conversation participant checking when schema is updated
+
+        // Fetch conversation details
+        const response = await fetch('/api/conversations');
+        const data = await response.json();
+        
+        if (data.conversations) {
+          const conv = data.conversations.find((c: Conversation) => c.id === conversationId);
+          setConversation(conv || null);
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     checkAuthAndAccess();
-  }, [conversationId]);
+  }, [conversationId, router]);
 
   if (loading) {
     return (

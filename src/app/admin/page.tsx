@@ -5,6 +5,9 @@
  * Protected by middleware and server-side role verification
  */
 
+// Force dynamic rendering to prevent build crashes from Supabase
+export const dynamic = "force-dynamic";
+
 import { redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { AdminDashboard } from '@/components/AdminDashboard';
@@ -102,5 +105,3 @@ export default async function AdminPage() {
     redirect('/');
   }
 }
-
-export const dynamic = "force-dynamic";

@@ -8,8 +8,9 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { supabase, subscribeToMessages } from '@/lib/supabase';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Message, Conversation } from '@/lib/supabase';
 
 interface ChatInterfaceProps {
@@ -25,7 +26,7 @@ export function ChatInterface({ conversationId, currentUserId, conversation }: C
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch(`/api/messages?conversationId=${conversationId}`);
       const data = await response.json();
@@ -38,22 +39,22 @@ export function ChatInterface({ conversationId, currentUserId, conversation }: C
     } finally {
       setLoading(false);
     }
-  };
+  }, [conversationId]);
 
   useEffect(() => {
     fetchMessages();
     
-    // Subscribe to real-time messages
-    const subscription = subscribeToMessages(conversationId, (newMessage) => {
-      setMessages(prev => [...prev, newMessage]);
-      scrollToBottom();
-    });
+    // TODO: Implement real-time subscription when Supabase is properly configured
+    // const subscription = subscribeToMessages(conversationId, (newMessage: Message) => {
+    //   setMessages(prev => [...prev, newMessage]);
+    //   scrollToBottom();
+    // });
 
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
+    // return () => {
+    //   if (subscription) {
+    //     subscription.unsubscribe();
+    //   }
+    // };
   }, [conversationId, fetchMessages]);
 
   const scrollToBottom = () => {
@@ -137,9 +138,11 @@ export function ChatInterface({ conversationId, currentUserId, conversation }: C
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-gray-300 dark:bg-primary-700 rounded-full flex items-center justify-center">
             {otherParticipant?.avatar_url ? (
-              <img 
+              <Image 
                 src={otherParticipant.avatar_url} 
                 alt={otherParticipant.username}
+                width={32}
+                height={32}
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (

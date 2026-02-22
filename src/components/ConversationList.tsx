@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { Conversation } from '@/lib/supabase';
 
@@ -150,9 +151,11 @@ export function ConversationList({ userId }: ConversationListProps) {
                 {/* Avatar */}
                 <div className="w-10 h-10 bg-gray-300 dark:bg-primary-700 rounded-full flex items-center justify-center flex-shrink-0">
                   {otherParticipant?.avatar_url ? (
-                    <img 
+                    <Image 
                       src={otherParticipant.avatar_url} 
                       alt={otherParticipant.username}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (

@@ -12,6 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { ClientHeader } from '@/components/ClientHeader';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 interface Listing {
   id: string;
@@ -156,9 +157,11 @@ export default function BrowsePage() {
             >
               <div className="w-full h-24 bg-gray-200 dark:bg-primary-800 rounded mb-3 flex items-center justify-center">
                 {listing.image ? (
-                  <img 
+                  <Image 
                     src={listing.image} 
                     alt={listing.title}
+                    width={96}
+                    height={96}
                     className="w-full h-full object-cover rounded"
                   />
                 ) : (
