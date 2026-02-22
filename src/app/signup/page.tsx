@@ -12,6 +12,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
+import { auth } from '@/lib/auth';
 
 /**
  * Form validation for .edu email addresses
@@ -104,14 +105,20 @@ export default function SignUpPage() {
     }
 
     setIsSubmitting(true);
+    setErrors({});
 
     try {
-      // Simulate API call - replace with actual registration logic
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const result = await auth.signUp(formData.name, formData.email, formData.password);
       
-      // Redirect to profile on success
-      window.location.href = '/profile';
-    } catch {
+      if (result.success) {
+        // Redirect to browse on successful registration
+        window.location.href = '/browse';
+      } else {
+        // Show error message
+        setErrors({ submit: result.error || 'Registration failed. Please try again.' });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
       setErrors({ submit: 'Registration failed. Please try again.' });
     } finally {
       setIsSubmitting(false);

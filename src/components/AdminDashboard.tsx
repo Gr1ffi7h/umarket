@@ -3,12 +3,12 @@
  * 
  * Client-side admin interface with user, listing, and conversation management
  * Includes role management and content moderation capabilities
+ * Uses localStorage for data persistence
  */
 
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -43,9 +43,10 @@ interface AdminDashboardProps {
   currentUserId: string;
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+// Remove Supabase client initialization
+// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 export function AdminDashboard({ 
   initialUsers, 
@@ -65,122 +66,91 @@ export function AdminDashboard({
     setTimeout(() => setMessage(''), 3000);
   };
 
-  const handleBanUser = async (userId: string) => {
-    if (!supabase) {
-      showMessage('Supabase not configured', true);
-      return;
-    }
+  // localStorage-based admin functions
+const handleBanUser = async (userId: string) => {
+  if (userId === currentUserId) {
+    showMessage('Cannot ban yourself', true);
+    return;
+  }
 
-    if (userId === currentUserId) {
-      showMessage('Cannot ban yourself', true);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: 'banned' })
-        .eq('id', userId);
-
-      if (error) {
-        showMessage('Error banning user: ' + error.message, true);
-      } else {
-        setUsers(users.map(u => u.id === userId ? { ...u, role: 'banned' } : u));
-        showMessage('User banned successfully');
-      }
-    } catch (error) {
-      showMessage('Error banning user', true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    // Get users from localStorage
+    const users = JSON.parse(localStorage.getItem('umarket_users') || '[]');
+    const updatedUsers = users.map((u: User) => 
+      u.id === userId ? { ...u, role: 'banned' } : u
+    );
+    localStorage.setItem('umarket_users', JSON.stringify(updatedUsers));
+    
+    setUsers(users.map((u: User) => u.id === userId ? { ...u, role: 'banned' } : u));
+    showMessage('User banned successfully');
+  } catch (error) {
+    showMessage('Error banning user', true);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleUnbanUser = async (userId: string) => {
-    if (!supabase) {
-      showMessage('Supabase not configured', true);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: 'user' })
-        .eq('id', userId);
-
-      if (error) {
-        showMessage('Error unbanning user: ' + error.message, true);
-      } else {
-        setUsers(users.map(u => u.id === userId ? { ...u, role: 'user' } : u));
-        showMessage('User unbanned successfully');
-      }
-    } catch (error) {
-      showMessage('Error unbanning user', true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    // Get users from localStorage
+    const users = JSON.parse(localStorage.getItem('umarket_users') || '[]');
+    const updatedUsers = users.map((u: User) => 
+      u.id === userId ? { ...u, role: 'user' } : u
+    );
+    localStorage.setItem('umarket_users', JSON.stringify(updatedUsers));
+    
+    setUsers(users.map((u: User) => u.id === userId ? { ...u, role: 'user' } : u));
+    showMessage('User unbanned successfully');
+  } catch (error) {
+    showMessage('Error unbanning user', true);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDeleteListing = async (listingId: string) => {
-    if (!supabase) {
-      showMessage('Supabase not configured', true);
-      return;
-    }
+  if (!confirm('Are you sure you want to delete this listing?')) {
+    return;
+  }
 
-    if (!confirm('Are you sure you want to delete this listing?')) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('listings')
-        .delete()
-        .eq('id', listingId);
-
-      if (error) {
-        showMessage('Error deleting listing: ' + error.message, true);
-      } else {
-        setListings(listings.filter(l => l.id !== listingId));
-        showMessage('Listing deleted successfully');
-      }
-    } catch (error) {
-      showMessage('Error deleting listing', true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    // Get listings from localStorage
+    const listings = JSON.parse(localStorage.getItem('umarket_listings') || '[]');
+    const updatedListings = listings.filter((l: Listing) => l.id !== listingId);
+    localStorage.setItem('umarket_listings', JSON.stringify(updatedListings));
+    
+    setListings(listings.filter((l: Listing) => l.id !== listingId));
+    showMessage('Listing deleted successfully');
+  } catch (error) {
+    showMessage('Error deleting listing', true);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDeleteConversation = async (conversationId: string) => {
-    if (!supabase) {
-      showMessage('Supabase not configured', true);
-      return;
-    }
+  if (!confirm('Are you sure you want to delete this conversation and all its messages?')) {
+    return;
+  }
 
-    if (!confirm('Are you sure you want to delete this conversation and all its messages?')) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('conversations')
-        .delete()
-        .eq('id', conversationId);
-
-      if (error) {
-        showMessage('Error deleting conversation: ' + error.message, true);
-      } else {
-        setConversations(conversations.filter(c => c.id !== conversationId));
-        showMessage('Conversation deleted successfully');
-      }
-    } catch (error) {
-      showMessage('Error deleting conversation', true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    // Get conversations from localStorage
+    const conversations = JSON.parse(localStorage.getItem('umarket_conversations') || '[]');
+    const updatedConversations = conversations.filter((c: Conversation) => c.id !== conversationId);
+    localStorage.setItem('umarket_conversations', JSON.stringify(updatedConversations));
+    
+    setConversations(conversations.filter((c: Conversation) => c.id !== conversationId));
+    showMessage('Conversation deleted successfully');
+  } catch (error) {
+    showMessage('Error deleting conversation', true);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="space-y-8">
