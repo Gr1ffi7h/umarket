@@ -25,7 +25,7 @@ export interface Conversation {
 export class MessagingService {
   // Get all conversations for current user
   static async getConversations(userId: string): Promise<Conversation[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('conversations')
       .select(`
         *,
@@ -48,7 +48,7 @@ export class MessagingService {
 
   // Get messages for a specific conversation
   static async getMessages(conversationId: string): Promise<Message[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
@@ -65,7 +65,7 @@ export class MessagingService {
     receiverId: string,
     content: string
   ): Promise<Message> {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('messages')
       .insert({
         conversation_id: conversationId,
@@ -80,7 +80,7 @@ export class MessagingService {
     if (error) throw error;
 
     // Update conversation's last_message_at
-    await supabase
+    await supabase!
       .from('conversations')
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversationId);
@@ -94,7 +94,7 @@ export class MessagingService {
     userId2: string
   ): Promise<Conversation> {
     // Check if conversation already exists
-    const { data: existingConv, error: fetchError } = await supabase
+    const { data: existingConv, error: fetchError } = await supabase!
       .from('conversations')
       .select('*')
       .or(`(participant1_id.eq.${userId1},participant2_id.eq.${userId2}),(participant1_id.eq.${userId2},participant2_id.eq.${userId1})`)
@@ -105,7 +105,7 @@ export class MessagingService {
     }
 
     // Create new conversation
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('conversations')
       .insert({
         participant1_id: userId1,
@@ -121,7 +121,7 @@ export class MessagingService {
 
   // Mark messages as read
   static async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
-    await supabase
+    await supabase!
       .from('messages')
       .update({ read: true })
       .eq('conversation_id', conversationId)
@@ -134,8 +134,8 @@ export class MessagingService {
     conversationId: string,
     callback: (message: Message) => void
   ) {
-    return supabase
-      .channel(`messages:${conversationId}`)
+    return supabase!
+      .channel(`conversation:${conversationId}`)
       .on('postgres_changes', 
         { 
           event: 'INSERT', 
@@ -153,8 +153,8 @@ export class MessagingService {
     userId: string,
     callback: (conversation: Conversation) => void
   ) {
-    return supabase
-      .channel(`conversations:${userId}`)
+    return supabase!
+      .channel(`public:conversations:${userId}`)
       .on('postgres_changes', 
         { 
           event: '*', 

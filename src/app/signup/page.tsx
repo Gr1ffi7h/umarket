@@ -121,7 +121,7 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase!.auth.signUp({
         email: formData.email.trim(),
         password: formData.password.trim(),
         options: {

@@ -26,7 +26,7 @@ export function Navigation() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await supabase!.auth.signOut();
     router.push('/');
   };
 

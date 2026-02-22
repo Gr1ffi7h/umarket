@@ -79,9 +79,9 @@ function AdminPanelContent() {
       try {
         // Fetch admin data
         const [usersData, listingsData, conversationsData] = await Promise.all([
-          supabase.from('profiles').select('*').order('created_at', { ascending: true }),
-          supabase.from('listings').select('*, profiles(*)').order('created_at', { ascending: false }),
-          supabase.from('conversations').select('*').order('created_at', { ascending: false })
+          supabase!.from('profiles').select('*').order('created_at', { ascending: true }),
+          supabase!.from('listings').select('*, profiles(*)').order('created_at', { ascending: false }),
+          supabase!.from('conversations').select('*').order('created_at', { ascending: false })
         ]);
 
         setAdminData({
@@ -107,7 +107,7 @@ function AdminPanelContent() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      await supabase.from('profiles').delete().eq('id', userId);
+      await supabase!.from('profiles').delete().eq('id', userId);
       setAdminData(prev => ({
         ...prev,
         users: prev.users.filter(u => u.id !== userId)
@@ -119,7 +119,7 @@ function AdminPanelContent() {
 
   const handleDeleteListing = async (listingId: string) => {
     try {
-      await supabase.from('listings').delete().eq('id', listingId);
+      await supabase!.from('listings').delete().eq('id', listingId);
       setAdminData(prev => ({
         ...prev,
         listings: prev.listings.filter(l => l.id !== listingId)

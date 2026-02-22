@@ -9,7 +9,7 @@ export default function TestAuth() {
   const { session, user, loading } = useAuth();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await supabase!.auth.signOut();
   };
 
   return (

@@ -33,21 +33,21 @@ function ProfileContent() {
       
       try {
         // Load user profile
-        const { data: profileData } = await supabase
+        const { data: profileData } = await supabase!
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
         // Load user stats
-        const { data: listingsData } = await supabase
+        const { data: listingsData } = await supabase!
           .from('listings')
           .select('status')
           .eq('user_id', user.id);
 
-        const totalListings = listingsData?.length || 0;
-        const activeListings = listingsData?.filter(l => l.status === 'active').length || 0;
-        const soldItems = listingsData?.filter(l => l.status === 'sold').length || 0;
+        const totalListings = (listingsData as any)?.length || 0;
+        const activeListings = (listingsData as any)?.filter((l: any) => l.status === 'active').length || 0;
+        const soldItems = (listingsData as any)?.filter((l: any) => l.status === 'sold').length || 0;
 
         setStats({ totalListings, activeListings, soldItems });
         setProfile(profileData);

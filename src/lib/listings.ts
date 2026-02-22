@@ -34,7 +34,7 @@ export class ListingsService {
     hasMore: boolean;
     totalCount: number;
   }> {
-    let query = supabase
+    let query = supabase!
       .from('listings')
       .select('*, profiles(*)')
       .eq('status', 'active')
@@ -61,37 +61,24 @@ export class ListingsService {
 
   // Get featured listings (random selection updated hourly)
   static async getFeaturedListings(): Promise<Listing[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('listings')
       .select('*, profiles(*)')
       .eq('status', 'active')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(5);
 
     if (error) throw error;
 
-    // Return random selection of 6 listings for featured section
-    const listings = data || [];
-    const featured = [];
-    const usedIndices = new Set<number>();
-
-    for (let i = 0; i < Math.min(6, listings.length); i++) {
-      let randomIndex;
-      do {
-        randomIndex = Math.floor(Math.random() * listings.length);
-      } while (usedIndices.has(randomIndex));
-      
-      usedIndices.add(randomIndex);
-      featured.push(listings[randomIndex]);
-    }
-
+    const featured: Listing[] = (data as any) || [];
     return featured;
   }
 
   // Get single listing by ID
   static async getListing(id: string): Promise<Listing | null> {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('listings')
-      .select('*, profiles(*)')
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -101,9 +88,9 @@ export class ListingsService {
 
   // Get user's listings
   static async getUserListings(userId: string): Promise<Listing[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('listings')
-      .select('*, profiles(*)')
+      .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
@@ -113,14 +100,16 @@ export class ListingsService {
 
   // Create new listing
   static async createListing(listing: Omit<Listing, 'id' | 'created_at' | 'updated_at'>): Promise<Listing> {
-    const { data, error } = await supabase
+    const listingData = {
+      ...listing,
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    const { data, error } = await supabase!
       .from('listings')
-      .insert({
-        ...listing,
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+      .insert(listingData as any)
       .select()
       .single();
 
@@ -130,12 +119,14 @@ export class ListingsService {
 
   // Update listing
   static async updateListing(id: string, updates: Partial<Listing>): Promise<Listing> {
-    const { data, error } = await supabase
+    const updateData = {
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+    
+    const { data, error } = await supabase!
       .from('listings')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData as any)
       .eq('id', id)
       .select()
       .single();
@@ -146,7 +137,7 @@ export class ListingsService {
 
   // Delete listing
   static async deleteListing(id: string): Promise<void> {
-    const { error } = await supabase
+    const { data, error } = await supabase!
       .from('listings')
       .delete()
       .eq('id', id);
@@ -160,11 +151,11 @@ export class ListingsService {
     hasMore: boolean;
     totalCount: number;
   }> {
-    const { data, error, count } = await supabase
+    const { data, error, count } = await supabase!
       .from('listings')
       .select('*, profiles(*)')
-      .eq('status', 'active')
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+      .ilike('title', `%${query}%`)
+      .or(`description.ilike.%${query}%,category.ilike.%${query}%`)
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
@@ -182,28 +173,24 @@ export class ListingsService {
 
   // Get categories
   static async getCategories(): Promise<string[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('listings')
       .select('category')
       .eq('status', 'active');
 
     if (error) throw error;
 
-    const categories = [...new Set(data?.map(item => item.category).filter(Boolean))];
+    const categories = [...new Set((data as any)?.map((item: any) => item.category).filter(Boolean))] as string[];
     return categories.sort();
   }
 
   // Subscribe to real-time listing updates
   static subscribeToListings(callback: (payload: any) => void) {
-    return supabase
-      .channel('listings')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'listings' 
-        }, 
-        callback
+    return supabase!
+      .channel('public:listings')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'listings' },
+        (payload) => callback(payload)
       )
       .subscribe();
   }

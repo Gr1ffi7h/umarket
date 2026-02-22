@@ -54,7 +54,7 @@ function LoginForm() {
     }
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase!.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });

@@ -44,7 +44,7 @@ function EditProfileContent() {
       if (!user) return;
       
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabase!
           .from('profiles')
           .select('*')
           .eq('id', user.id)
@@ -56,10 +56,10 @@ function EditProfileContent() {
 
         if (data) {
           setFormData({
-            full_name: data.full_name || '',
+            full_name: (data as any).full_name || '',
             email: user.email || '',
-            campus: data.campus || '',
-            bio: data.bio || '',
+            campus: (data as any).campus || '',
+            bio: (data as any).bio || '',
           });
         } else {
           // Create profile if it doesn't exist
@@ -134,7 +134,7 @@ function EditProfileContent() {
     setSuccess('');
 
     try {
-      const { error } = await supabase
+      const { error } = await supabase!
         .from('profiles')
         .upsert({
           id: user?.id,
@@ -142,7 +142,7 @@ function EditProfileContent() {
           campus: formData.campus,
           bio: formData.bio.trim(),
           updated_at: new Date().toISOString(),
-        });
+        } as any);
 
       if (error) throw error;
 
