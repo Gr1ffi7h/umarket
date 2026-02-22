@@ -22,9 +22,9 @@ export const auth = {
         name: 'Demo User'
       };
       localStorage.setItem('umarket_user', JSON.stringify(user));
-      return user;
+      return Promise.resolve(user);
     }
-    return null;
+    return Promise.resolve(null);
   },
 
   // Sign out user
