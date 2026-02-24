@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { User, Session } from "@supabase/supabase-js"
 
@@ -21,33 +21,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase!.auth.getSession()
+  const getInitialSession = useCallback(async () => {
+    try {
+      console.log('AuthContext: Getting initial session...')
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('AuthContext: Error getting session:', error)
+        setSession(null)
+        setUser(null)
+      } else {
+        console.log('AuthContext: Session loaded:', session ? 'User logged in' : 'No session')
         setSession(session)
         setUser(session?.user ?? null)
-      } catch (error) {
-        console.error('Error getting initial session:', error)
-      } finally {
-        setLoading(false)
       }
+    } catch (error) {
+      console.error('AuthContext: Unexpected error:', error)
+      setSession(null)
+      setUser(null)
+    } finally {
+      console.log('AuthContext: Setting loading to false')
+      setLoading(false)
     }
+  }, [])
 
+  useEffect(() => {
+    console.log('AuthContext: Setting up auth listeners...')
     getInitialSession()
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase!.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('AuthContext: Auth state changed:', event, session ? 'Session exists' : 'No session')
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
       }
     )
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => {
+      console.log('AuthContext: Cleaning up subscription')
+      subscription.unsubscribe()
+    }
+  }, [getInitialSession])
 
   return (
     <AuthContext.Provider value={{ session, user, loading }}>

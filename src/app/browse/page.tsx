@@ -110,7 +110,7 @@ function FeaturedSection() {
 }
 
 function BrowsePage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,7 +124,12 @@ function BrowsePage() {
 
   useEffect(() => {
     const loadListings = async () => {
+      if (authLoading) return; // Don't load until auth is resolved
+      
       try {
+        console.log('BrowsePage: Loading listings...')
+        setLoading(true);
+        
         const [featuredData, listingsData] = await Promise.all([
           ListingsService.getFeaturedListings(),
           ListingsService.getListings(page, limit, selectedCategory === 'All' ? undefined : selectedCategory)
@@ -133,15 +138,17 @@ function BrowsePage() {
         setFeaturedListings(featuredData);
         setListings(listingsData.listings);
         setHasMore(listingsData.hasMore);
+        
+        console.log('BrowsePage: Listings loaded successfully')
       } catch (error) {
-        console.error('Error loading listings:', error);
+        console.error('BrowsePage: Error loading listings:', error);
       } finally {
         setLoading(false);
       }
     };
 
     loadListings();
-  }, [page, selectedCategory]);
+  }, [page, selectedCategory, authLoading]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();

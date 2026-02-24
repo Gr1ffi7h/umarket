@@ -34,115 +34,185 @@ export class ListingsService {
     hasMore: boolean;
     totalCount: number;
   }> {
-    let query = supabase!
-      .from('listings')
-      .select('*, profiles(*)')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false });
+    try {
+      console.log('ListingsService: Getting listings...', { page, limit, category })
+      
+      let query = supabase
+        .from('listings')
+        .select('*, profiles(*)', { count: 'exact' })
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-    if (category) {
-      query = query.eq('category', category);
+      if (category) {
+        query = query.eq('category', category);
+      }
+
+      const { data, error, count } = await query
+        .range((page - 1) * limit, page * limit - 1);
+
+      if (error) {
+        console.error('ListingsService: Error getting listings:', error)
+        throw error;
+      }
+
+      const totalCount = count || 0;
+      const hasMore = totalCount > page * limit;
+
+      console.log('ListingsService: Listings loaded:', data?.length || 0, 'Total:', totalCount)
+
+      return {
+        listings: data || [],
+        hasMore,
+        totalCount
+      };
+    } catch (error) {
+      console.error('ListingsService: Unexpected error:', error)
+      throw error;
     }
-
-    const { data, error, count } = await query
-      .range((page - 1) * limit, page * limit - 1);
-
-    if (error) throw error;
-
-    const totalCount = count || 0;
-    const hasMore = page * limit < totalCount;
-
-    return {
-      listings: data || [],
-      hasMore,
-      totalCount
-    };
   }
 
-  // Get featured listings (random selection updated hourly)
+  // Get featured listings
   static async getFeaturedListings(): Promise<Listing[]> {
-    const { data, error } = await supabase!
-      .from('listings')
-      .select('*, profiles(*)')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(5);
+    try {
+      console.log('ListingsService: Getting featured listings...')
+      
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*, profiles(*)')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(6);
 
-    if (error) throw error;
+      if (error) {
+        console.error('ListingsService: Error getting featured listings:', error)
+        throw error;
+      }
 
-    const featured: Listing[] = (data as any) || [];
-    return featured;
+      console.log('ListingsService: Featured listings loaded:', data?.length || 0)
+      return data || [];
+    } catch (error) {
+      console.error('ListingsService: Unexpected error getting featured listings:', error)
+      throw error;
+    }
   }
 
   // Get single listing by ID
   static async getListing(id: string): Promise<Listing | null> {
-    const { data, error } = await supabase!
-      .from('listings')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      console.log('ListingsService: Getting listing:', id)
+      
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*, profiles(*)')
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.error('ListingsService: Error getting listing:', error)
+        return null;
+      }
+
+      console.log('ListingsService: Listing loaded:', data ? 'Success' : 'Not found')
+      return data;
+    } catch (error) {
+      console.error('ListingsService: Unexpected error getting listing:', error)
+      return null;
+    }
   }
 
-  // Get user's listings
+  // Get listings for a specific user
   static async getUserListings(userId: string): Promise<Listing[]> {
-    const { data, error } = await supabase!
-      .from('listings')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    try {
+      console.log('ListingsService: Getting user listings:', userId)
+      
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
+      if (error) {
+        console.error('ListingsService: Error getting user listings:', error)
+        throw error;
+      }
+
+      console.log('ListingsService: User listings loaded:', data?.length || 0)
+      return data || [];
+    } catch (error) {
+      console.error('ListingsService: Unexpected error getting user listings:', error)
+      throw error;
+    }
   }
 
   // Create new listing
   static async createListing(listing: Omit<Listing, 'id' | 'created_at' | 'updated_at'>): Promise<Listing> {
-    const listingData = {
-      ...listing,
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    const { data, error } = await supabase!
-      .from('listings')
-      .insert(listingData as any)
-      .select()
-      .single();
+    try {
+      console.log('ListingsService: Creating listing:', listing.title)
+      
+      const { data, error } = await supabase
+        .from('listings')
+        .insert(listing as any)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.error('ListingsService: Error creating listing:', error)
+        throw error;
+      }
+
+      console.log('ListingsService: Listing created successfully')
+      return data;
+    } catch (error) {
+      console.error('ListingsService: Unexpected error creating listing:', error)
+      throw error;
+    }
   }
 
   // Update listing
   static async updateListing(id: string, updates: Partial<Listing>): Promise<Listing> {
-    const updateData = {
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
-    
-    const { data, error } = await supabase!
-      .from('listings')
-      .update(updateData as any)
-      .eq('id', id)
-      .select()
-      .single();
+    try {
+      console.log('ListingsService: Updating listing:', id)
+      
+      const { data, error } = await supabase
+        .from('listings')
+        .update(updates as any)
+        .eq('id', id)
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.error('ListingsService: Error updating listing:', error)
+        throw error;
+      }
+
+      console.log('ListingsService: Listing updated successfully')
+      return data;
+    } catch (error) {
+      console.error('ListingsService: Unexpected error updating listing:', error)
+      throw error;
+    }
   }
 
   // Delete listing
   static async deleteListing(id: string): Promise<void> {
-    const { data, error } = await supabase!
-      .from('listings')
-      .delete()
-      .eq('id', id);
+    try {
+      console.log('ListingsService: Deleting listing:', id)
+      
+      const { error } = await supabase
+        .from('listings')
+        .delete()
+        .eq('id', id);
 
-    if (error) throw error;
+      if (error) {
+        console.error('ListingsService: Error deleting listing:', error)
+        throw error;
+      }
+
+      console.log('ListingsService: Listing deleted successfully')
+    } catch (error) {
+      console.error('ListingsService: Unexpected error deleting listing:', error)
+      throw error;
+    }
   }
 
   // Search listings
@@ -151,47 +221,83 @@ export class ListingsService {
     hasMore: boolean;
     totalCount: number;
   }> {
-    const { data, error, count } = await supabase!
-      .from('listings')
-      .select('*, profiles(*)')
-      .ilike('title', `%${query}%`)
-      .or(`description.ilike.%${query}%,category.ilike.%${query}%`)
-      .order('created_at', { ascending: false })
-      .range((page - 1) * limit, page * limit - 1);
+    try {
+      console.log('ListingsService: Searching listings:', { query, page, limit })
+      
+      const { data, error, count } = await supabase
+        .from('listings')
+        .select('*, profiles(*)', { count: 'exact' })
+        .eq('status', 'active')
+        .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+        .order('created_at', { ascending: false })
+        .range((page - 1) * limit, page * limit - 1);
 
-    if (error) throw error;
+      if (error) {
+        console.error('ListingsService: Error searching listings:', error)
+        throw error;
+      }
 
-    const totalCount = count || 0;
-    const hasMore = page * limit < totalCount;
+      const totalCount = count || 0;
+      const hasMore = totalCount > page * limit;
 
-    return {
-      listings: data || [],
-      hasMore,
-      totalCount
-    };
+      console.log('ListingsService: Search results:', data?.length || 0, 'Total:', totalCount)
+
+      return {
+        listings: data || [],
+        hasMore,
+        totalCount
+      };
+    } catch (error) {
+      console.error('ListingsService: Unexpected error searching listings:', error)
+      throw error;
+    }
   }
 
-  // Get categories
+  // Get all categories
   static async getCategories(): Promise<string[]> {
-    const { data, error } = await supabase!
-      .from('listings')
-      .select('category')
-      .eq('status', 'active');
+    try {
+      console.log('ListingsService: Getting categories...')
+      
+      const { data, error } = await supabase
+        .from('listings')
+        .select('category')
+        .eq('status', 'active');
 
-    if (error) throw error;
+      if (error) {
+        console.error('ListingsService: Error getting categories:', error)
+        throw error;
+      }
 
-    const categories = [...new Set((data as any)?.map((item: any) => item.category).filter(Boolean))] as string[];
-    return categories.sort();
+      const categories = [...new Set(data?.map(item => item.category) || [])];
+      console.log('ListingsService: Categories loaded:', categories.length)
+      return categories;
+    } catch (error) {
+      console.error('ListingsService: Unexpected error getting categories:', error)
+      throw error;
+    }
   }
 
-  // Subscribe to real-time listing updates
-  static subscribeToListings(callback: (payload: any) => void) {
-    return supabase!
-      .channel('public:listings')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'listings' },
-        (payload) => callback(payload)
+  // Subscribe to real-time updates
+  static subscribeToListings(callback: (listing: Listing) => void) {
+    console.log('ListingsService: Setting up real-time subscription')
+    
+    const subscription = supabase
+      .channel('listings')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'listings' 
+        }, 
+        (payload) => {
+          console.log('ListingsService: Real-time update:', payload)
+          if (payload.new) {
+            callback(payload.new as Listing);
+          }
+        }
       )
       .subscribe();
+
+    return subscription;
   }
 }
