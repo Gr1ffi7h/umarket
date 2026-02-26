@@ -12,7 +12,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/providers/AuthProvider';
-import { ProtectedPage } from '@/components/ProtectedPage';
 import { ListingsService, Listing } from '@/lib/listings';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -212,9 +211,5 @@ function ListingDetailContent() {
 }
 
 export default function ListingDetailPage() {
-  return (
-    <ProtectedPage>
-      <ListingDetailContent />
-    </ProtectedPage>
-  );
+  return <ListingDetailContent />;
 }

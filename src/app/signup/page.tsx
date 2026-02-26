@@ -9,7 +9,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -41,18 +41,13 @@ export default function SignUpPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mounted, setMounted] = React.useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const { signUp, user, loading } = useAuth();
 
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // Redirect if already logged in
-  React.useEffect(() => {
+  useEffect(() => {
     if (user && !loading) {
       router.replace('/browse');
     }
@@ -127,19 +122,9 @@ export default function SignUpPage() {
       if (error) {
         setErrors({ submit: error.message });
       } else {
-        // Wait for user state to update after successful signup
-        console.log('SignupPage: Signup successful, waiting for user state...');
-        
-        // Give AuthProvider a moment to update the user state
-        setTimeout(() => {
-          if (user) {
-            console.log('SignupPage: User established, redirecting to browse');
-            router.replace('/browse');
-          } else {
-            console.log('SignupPage: No user state, redirecting to login');
-            router.replace('/login?message=Please check your email to verify your account');
-          }
-        }, 1000);
+        // In most Supabase setups email confirmation is enabled.
+        // We avoid relying on immediate user state here to prevent mis-redirects.
+        router.replace('/login?message=Please check your email to verify your account');
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -148,14 +133,6 @@ export default function SignUpPage() {
       setIsSubmitting(false);
     }
   };
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">

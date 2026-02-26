@@ -9,14 +9,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { MessagingService } from '@/lib/messaging';
 
 interface Message {
   id: string;
   content: string;
   senderId: string;
-  timestamp: string;
   createdAt: string;
   type?: 'text' | 'image';
   imageUrl?: string;
@@ -46,14 +45,15 @@ export function ChatInterface({ conversationId, currentUserId, conversation }: C
 
   const fetchMessages = useCallback(async () => {
     try {
-      const response = await fetch(`/api/messages?conversationId=${conversationId}`);
-      const data = await response.json();
-      
-      if (data.messages) {
-        setMessages(data.messages);
-      }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
+      const data = await MessagingService.getMessages(conversationId);
+      setMessages(
+        data.map((m) => ({
+          id: m.id,
+          content: m.content,
+          senderId: m.sender_id,
+          createdAt: m.created_at,
+        }))
+      );
     } finally {
       setLoading(false);
     }
@@ -91,46 +91,31 @@ export function ChatInterface({ conversationId, currentUserId, conversation }: C
     setSending(true);
     
     try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId,
-          messageText: newMessage.trim(),
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.message) {
-        setMessages(prev => [...prev, data.message]);
+      const message = await MessagingService.sendMessage(conversationId, currentUserId, newMessage.trim());
+      if (message) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: message.id,
+            content: message.content,
+            senderId: message.sender_id,
+            createdAt: message.created_at,
+          },
+        ]);
         setNewMessage('');
         scrollToBottom();
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
     } finally {
       setSending(false);
     }
-  };
-
-  const formatMessageTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
   };
 
   const getOtherParticipant = () => {
     // Simplified for now - return current user info
     // TODO: Implement proper participant logic when schema is updated
     return {
-      id: currentUserId,
-      username: 'Other User',
+      id: conversation.participantId,
+      username: conversation.participantName || 'Other User',
       avatar_url: undefined
     };
   };

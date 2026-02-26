@@ -153,13 +153,6 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // Session check will be handled by navigation components
-    // This keeps the login page simple and focused on form handling
-  }, []);
-
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
       <ClientHeader />

@@ -32,12 +32,15 @@ export function GlobalErrorLogger() {
     };
 
     // Unhandled promise rejection handler
-    window.addEventListener('unhandledrejection', (event) => {
+    const handleUnhandled = (event: PromiseRejectionEvent) => {
       console.error("Unhandled Promise Rejection:", event.reason);
-    });
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandled);
 
     return () => {
       window.onerror = null;
+      window.removeEventListener('unhandledrejection', handleUnhandled);
     };
   }, []);
 

@@ -12,6 +12,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Enable React strict mode for better development experience
   reactStrictMode: true,
+
+  // Avoid workspace-root inference issues on hosts with multiple lockfiles
+  outputFileTracingRoot: process.cwd(),
     
   // Optimize images for Vercel deployment
   images: {
@@ -41,10 +44,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  
-  // Environment variable validation
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
+
+  webpack: (config, { dev }) => {
+    // Webpack filesystem cache can intermittently emit PackFileCacheStrategy warnings on some hosts.
+    // Disabling it in production keeps CI/Vercel output clean and deterministic.
+    if (!dev) {
+      config.cache = false;
+    }
+    return config;
   },
 };
 

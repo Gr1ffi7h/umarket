@@ -9,23 +9,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import { ProtectedPage } from '@/components/ProtectedPage';
 import { ConversationList } from '@/components/ConversationList';
-import { ChatInterface } from '@/components/ChatInterface';
 
 export const dynamic = "force-dynamic";
 
 function MessagesContent() {
-  const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [conversation, setConversation] = useState<any>(null);
   const [accessDenied, setAccessDenied] = useState(false);
-
-  const conversationId = params.conversationId as string;
 
   useEffect(() => {
     if (!user) {

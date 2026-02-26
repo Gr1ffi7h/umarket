@@ -12,7 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/providers/AuthProvider';
 import { ProtectedPage } from '@/components/ProtectedPage';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 import Link from 'next/link';
 
 export const dynamic = "force-dynamic";
@@ -21,6 +21,7 @@ function ProfileContent() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalListings: 0,
     activeListings: 0,
@@ -29,18 +30,28 @@ function ProfileContent() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        setError('Supabase is not configured.');
+        setLoading(false);
+        return;
+      }
       
       try {
         // Load user profile
-        const { data: profileData } = await supabase!
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
         // Load user stats
-        const { data: listingsData } = await supabase!
+        const { data: listingsData } = await supabase
           .from('listings')
           .select('status')
           .eq('user_id', user.id);
@@ -52,7 +63,7 @@ function ProfileContent() {
         setStats({ totalListings, activeListings, soldItems });
         setProfile(profileData);
       } catch (error) {
-        console.error('Error loading profile:', error);
+        setError('Failed to load profile.');
       } finally {
         setLoading(false);
       }
@@ -71,6 +82,17 @@ function ProfileContent() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Profile unavailable</h2>
+          <p className="text-gray-600 dark:text-gray-300">{error}</p>
+        </div>
       </div>
     );
   }

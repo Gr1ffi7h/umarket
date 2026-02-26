@@ -9,7 +9,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabaseClient'
+import { getSupabaseBrowserClient } from '@/lib/supabaseClient'
 
 // Types
 export interface AuthState {
@@ -54,12 +54,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Initialize auth on mount
   const initializeAuth = useCallback(async () => {
     try {
-      console.log('AuthProvider: Initializing auth...')
-      
+      const supabase = getSupabaseBrowserClient()
+      if (!supabase) {
+        setAuthState({
+          user: null,
+          session: null,
+          loading: false,
+          error: 'Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+        })
+        return
+      }
+
       const { data: { session }, error } = await supabase.auth.getSession()
       
       if (error) {
-        console.error('AuthProvider: Error getting session:', error)
         setAuthState(prev => ({
           ...prev,
           loading: false,
@@ -70,12 +78,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return
       }
 
-      console.log('AuthProvider: Session loaded:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id,
-        email: session?.user?.email 
-      })
-
       setAuthState({
         user: session?.user ?? null,
         session: session,
@@ -83,7 +85,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         error: null
       })
     } catch (error) {
-      console.error('AuthProvider: Unexpected error:', error)
       setAuthState(prev => ({
         ...prev,
         loading: false,
@@ -96,13 +97,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Handle auth state changes
   const handleAuthStateChange = useCallback((event: string, session: Session | null) => {
-    console.log('AuthProvider: Auth state changed:', { 
-      event, 
-      hasSession: !!session,
-      userId: session?.user?.id,
-      email: session?.user?.email 
-    })
-
     setAuthState({
       user: session?.user ?? null,
       session: session,
@@ -114,11 +108,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign out function
   const signOut = useCallback(async () => {
     try {
-      console.log('AuthProvider: Signing out...')
+      const supabase = getSupabaseBrowserClient()
+      if (!supabase) {
+        setAuthState(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Supabase is not configured.'
+        }))
+        return
+      }
+
       const { error } = await supabase.auth.signOut()
       
       if (error) {
-        console.error('AuthProvider: Error signing out:', error)
         setAuthState(prev => ({
           ...prev,
           error: error.message
@@ -132,7 +134,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         })
       }
     } catch (error) {
-      console.error('AuthProvider: Unexpected error signing out:', error)
       setAuthState(prev => ({
         ...prev,
         error: 'Failed to sign out'
@@ -143,21 +144,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign in function
   const signIn = useCallback(async (email: string, password: string) => {
     try {
-      console.log('AuthProvider: Signing in...')
+      const supabase = getSupabaseBrowserClient()
+      if (!supabase) {
+        return { error: { message: 'Supabase is not configured.' } as AuthError }
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim()
       })
 
       if (error) {
-        console.error('AuthProvider: Sign in error:', error)
         return { error }
       }
 
-      console.log('AuthProvider: Sign in successful')
       return { error: null }
     } catch (error) {
-      console.error('AuthProvider: Unexpected sign in error:', error)
       return { error: { message: 'Failed to sign in' } as AuthError }
     }
   }, [])
@@ -165,7 +167,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign up function
   const signUp = useCallback(async (email: string, password: string, metadata?: { name?: string }) => {
     try {
-      console.log('AuthProvider: Signing up...')
+      const supabase = getSupabaseBrowserClient()
+      if (!supabase) {
+        return { error: { message: 'Supabase is not configured.' } as AuthError }
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
@@ -175,31 +181,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
-        console.error('AuthProvider: Sign up error:', error)
         return { error }
       }
 
-      console.log('AuthProvider: Sign up successful')
       return { error: null }
     } catch (error) {
-      console.error('AuthProvider: Unexpected sign up error:', error)
       return { error: { message: 'Failed to sign up' } as AuthError }
     }
   }, [])
 
   // Set up auth listeners on mount
   useEffect(() => {
-    console.log('AuthProvider: Setting up auth provider...')
-    
     // Initialize auth
     initializeAuth()
 
     // Listen for auth state changes
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) {
+      return
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange)
 
     // Cleanup
     return () => {
-      console.log('AuthProvider: Cleaning up auth subscription')
       subscription.unsubscribe()
     }
   }, [initializeAuth, handleAuthStateChange])

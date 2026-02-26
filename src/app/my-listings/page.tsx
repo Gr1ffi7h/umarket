@@ -33,13 +33,15 @@ function MyListingsContent() {
 
   useEffect(() => {
     const loadListings = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       
       try {
         const userListings = await ListingsService.getUserListings(user.id);
         setListings(userListings);
       } catch (error) {
-        console.error('Error loading listings:', error);
         setError('Failed to load your listings');
       } finally {
         setLoading(false);

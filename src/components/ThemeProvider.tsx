@@ -45,7 +45,7 @@ function getSystemTheme(): Theme {
 function getStoredTheme(): Theme | null {
   if (typeof window === 'undefined') return null;
   try {
-    const stored = localStorage.getItem('theme');
+    const stored = localStorage.getItem('umarket_theme');
     return stored === 'light' || stored === 'dark' ? stored : null;
   } catch {
     return null;
@@ -58,7 +58,7 @@ function getStoredTheme(): Theme | null {
 function storeTheme(theme: Theme) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem('theme', theme);
+    localStorage.setItem('umarket_theme', theme);
   } catch {
     // Ignore localStorage errors
   }
@@ -73,11 +73,9 @@ function storeTheme(theme: Theme) {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
   const [systemTheme, setSystemTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
 
   // Initialize theme on mount
   useEffect(() => {
-    setMounted(true);
     setSystemTheme(getSystemTheme());
     
     const stored = getStoredTheme();
@@ -114,12 +112,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Apply theme to document
   useEffect(() => {
-    if (!mounted) return;
-    
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-  }, [theme, mounted]);
+    if (typeof document === 'undefined') return;
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   /**
    * Toggle between light and dark themes
@@ -129,15 +124,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(newTheme);
     storeTheme(newTheme);
   };
-
-  // Prevent flash of incorrect theme
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900">
-        {children}
-      </div>
-    );
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, systemTheme }}>

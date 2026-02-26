@@ -7,7 +7,6 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
@@ -17,8 +16,6 @@ export function Navigation() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
-  console.log('Navigation: Auth state:', { user: !!user, loading });
-
   const handleProtectedNav = (e: React.MouseEvent, href: string) => {
     if (!user) {
       e.preventDefault();
@@ -27,7 +24,6 @@ export function Navigation() {
   };
 
   const handleLogout = async () => {
-    console.log('Navigation: Logging out...');
     await signOut();
     router.push('/');
   };

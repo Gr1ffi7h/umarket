@@ -11,88 +11,41 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuth } from '@/providers/AuthProvider';
-import { MessagingService, Conversation } from '@/lib/messaging';
+import { MessagingService, type ConversationSummary } from '@/lib/messaging';
 
 interface ConversationListProps {
   userId: string;
 }
 
 export function ConversationList({ userId }: ConversationListProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
     const loadConversations = async () => {
       try {
-        const convs = await MessagingService.getConversations(user.id);
+        const convs = await MessagingService.getConversations(userId);
         setConversations(convs);
       } catch (error) {
-        console.error('Error fetching conversations:', error);
       } finally {
         setLoading(false);
       }
     };
 
     loadConversations();
+  }, [userId]);
 
-    // Subscribe to real-time updates
-    const subscription = MessagingService.subscribeToConversations(user.id, (updatedConv) => {
-      setConversations(prev => {
-        const index = prev.findIndex(c => c.id === updatedConv.id);
-        if (index >= 0) {
-          const newConvs = [...prev];
-          newConvs[index] = updatedConv;
-          return newConvs.sort((a, b) => 
-            new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
-          );
-        } else {
-          return [updatedConv, ...prev].sort((a, b) => 
-            new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
-          );
-        }
-      });
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [user]);
-
-  const getOtherParticipant = (conversation: Conversation) => {
-    if (!user) return null;
-    
-    const isParticipant1 = conversation.participant1_id === user.id;
-    
+  const getOtherParticipant = (conversation: ConversationSummary) => {
     return {
-      id: isParticipant1 ? conversation.participant2_id : conversation.participant1_id,
-      username: isParticipant1 ? conversation.participant2_name || 'User' : conversation.participant1_name || 'User',
-      avatar_url: isParticipant1 ? conversation.participant2_avatar : conversation.participant1_avatar,
+      id: conversation.other_participant?.id ?? '',
+      username: conversation.other_participant?.full_name ?? 'User',
+      avatar_url: conversation.other_participant?.avatar_url ?? null,
     };
-  };
-
-  const formatLastMessageTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) {
-      return 'Just now';
-    } else if (diffMins < 60) {
-      return `${diffMins}m ago`;
-    } else if (diffHours < 24) {
-      return `${diffHours}h ago`;
-    } else if (diffDays < 7) {
-      return `${diffDays}d ago`;
-    } else {
-      return date.toLocaleDateString();
-    }
   };
 
   if (loading) {
@@ -168,15 +121,15 @@ export function ConversationList({ userId }: ConversationListProps) {
                     <h3 className="font-medium text-gray-900 dark:text-white truncate">
                       {otherParticipant?.username || 'Unknown User'}
                     </h3>
-                    {conversation.last_message_at && (
+                    {(conversation.last_message_at || conversation.created_at) && (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(conversation.last_message_at).toLocaleDateString()}
+                        {new Date(conversation.last_message_at ?? conversation.created_at).toLocaleDateString()}
                       </span>
                     )}
                   </div>
                   
                   <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                    No messages yet
+                    {conversation.last_message ?? 'No messages yet'}
                   </p>
                 </div>
               </div>

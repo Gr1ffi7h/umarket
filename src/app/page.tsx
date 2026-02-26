@@ -8,7 +8,6 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
 import { useAuth } from '@/providers/AuthProvider';
@@ -16,10 +15,6 @@ import { useAuth } from '@/providers/AuthProvider';
 export const dynamic = "force-dynamic";
 
 function HeroSection() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
-
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 flex items-center justify-center overflow-hidden">
       {/* Animated background elements */}

@@ -12,6 +12,7 @@ import '../styles/globals.css';
 import { ConditionalNavigation } from '@/components/ConditionalNavigation';
 import { GlobalErrorLogger } from '@/components/GlobalErrorLogger';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { AppWrapper } from '@/components/AppWrapper';
 
 // Optimize font loading
 const inter = Inter({
@@ -38,7 +39,6 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
   openGraph: {
     title: 'UMarket - College Student Marketplace',
     description: 'A secure marketplace exclusively for college students',
@@ -65,6 +65,7 @@ export const metadata: Metadata = {
   verification: {
     google: 'your-google-verification-code',
   },
+  metadataBase: new URL('https://umarket.vercel.app'),
 };
 
 /**
@@ -103,12 +104,14 @@ export default function RootLayout({
         <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
       </head>
       <body className={`${inter.variable} font-sans antialiased overflow-x-hidden min-h-screen`}>
-        <AuthProvider>
-          <GlobalErrorLogger />
-          <ConditionalNavigation>
-            {children}
-          </ConditionalNavigation>
-        </AuthProvider>
+        <AppWrapper>
+          <AuthProvider>
+            <GlobalErrorLogger />
+            <ConditionalNavigation>
+              {children}
+            </ConditionalNavigation>
+          </AuthProvider>
+        </AppWrapper>
       </body>
     </html>
   );

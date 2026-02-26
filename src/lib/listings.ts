@@ -5,7 +5,7 @@
  * Real-time subscriptions for cross-device sync
  */
 
-import { supabase } from './supabaseClient';
+import { getSupabaseBrowserClient } from './supabaseClient';
 
 export interface Listing {
   id: string;
@@ -35,7 +35,10 @@ export class ListingsService {
     totalCount: number;
   }> {
     try {
-      console.log('ListingsService: Getting listings...', { page, limit, category })
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        return { listings: [], hasMore: false, totalCount: 0 };
+      }
       
       let query = supabase
         .from('listings')
@@ -58,15 +61,12 @@ export class ListingsService {
       const totalCount = count || 0;
       const hasMore = totalCount > page * limit;
 
-      console.log('ListingsService: Listings loaded:', data?.length || 0, 'Total:', totalCount)
-
       return {
         listings: data || [],
         hasMore,
         totalCount
       };
     } catch (error) {
-      console.error('ListingsService: Unexpected error:', error)
       throw error;
     }
   }
@@ -74,7 +74,8 @@ export class ListingsService {
   // Get featured listings
   static async getFeaturedListings(): Promise<Listing[]> {
     try {
-      console.log('ListingsService: Getting featured listings...')
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return [];
       
       const { data, error } = await supabase
         .from('listings')
@@ -84,14 +85,11 @@ export class ListingsService {
         .limit(6);
 
       if (error) {
-        console.error('ListingsService: Error getting featured listings:', error)
         throw error;
       }
 
-      console.log('ListingsService: Featured listings loaded:', data?.length || 0)
       return data || [];
     } catch (error) {
-      console.error('ListingsService: Unexpected error getting featured listings:', error)
       throw error;
     }
   }
@@ -99,7 +97,8 @@ export class ListingsService {
   // Get single listing by ID
   static async getListing(id: string): Promise<Listing | null> {
     try {
-      console.log('ListingsService: Getting listing:', id)
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return null;
       
       const { data, error } = await supabase
         .from('listings')
@@ -108,14 +107,11 @@ export class ListingsService {
         .single();
 
       if (error) {
-        console.error('ListingsService: Error getting listing:', error)
         return null;
       }
 
-      console.log('ListingsService: Listing loaded:', data ? 'Success' : 'Not found')
       return data;
     } catch (error) {
-      console.error('ListingsService: Unexpected error getting listing:', error)
       return null;
     }
   }
@@ -123,7 +119,8 @@ export class ListingsService {
   // Get listings for a specific user
   static async getUserListings(userId: string): Promise<Listing[]> {
     try {
-      console.log('ListingsService: Getting user listings:', userId)
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return [];
       
       const { data, error } = await supabase
         .from('listings')
@@ -132,14 +129,11 @@ export class ListingsService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('ListingsService: Error getting user listings:', error)
         throw error;
       }
 
-      console.log('ListingsService: User listings loaded:', data?.length || 0)
       return data || [];
     } catch (error) {
-      console.error('ListingsService: Unexpected error getting user listings:', error)
       throw error;
     }
   }
@@ -147,7 +141,8 @@ export class ListingsService {
   // Create new listing
   static async createListing(listing: Omit<Listing, 'id' | 'created_at' | 'updated_at'>): Promise<Listing> {
     try {
-      console.log('ListingsService: Creating listing:', listing.title)
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) throw new Error('Supabase is not configured.');
       
       const { data, error } = await supabase
         .from('listings')
@@ -156,14 +151,11 @@ export class ListingsService {
         .single();
 
       if (error) {
-        console.error('ListingsService: Error creating listing:', error)
         throw error;
       }
 
-      console.log('ListingsService: Listing created successfully')
       return data;
     } catch (error) {
-      console.error('ListingsService: Unexpected error creating listing:', error)
       throw error;
     }
   }
@@ -171,7 +163,8 @@ export class ListingsService {
   // Update listing
   static async updateListing(id: string, updates: Partial<Listing>): Promise<Listing> {
     try {
-      console.log('ListingsService: Updating listing:', id)
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) throw new Error('Supabase is not configured.');
       
       const { data, error } = await supabase
         .from('listings')
@@ -181,14 +174,11 @@ export class ListingsService {
         .single();
 
       if (error) {
-        console.error('ListingsService: Error updating listing:', error)
         throw error;
       }
 
-      console.log('ListingsService: Listing updated successfully')
       return data;
     } catch (error) {
-      console.error('ListingsService: Unexpected error updating listing:', error)
       throw error;
     }
   }
@@ -196,7 +186,8 @@ export class ListingsService {
   // Delete listing
   static async deleteListing(id: string): Promise<void> {
     try {
-      console.log('ListingsService: Deleting listing:', id)
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) throw new Error('Supabase is not configured.');
       
       const { error } = await supabase
         .from('listings')
@@ -204,13 +195,9 @@ export class ListingsService {
         .eq('id', id);
 
       if (error) {
-        console.error('ListingsService: Error deleting listing:', error)
         throw error;
       }
-
-      console.log('ListingsService: Listing deleted successfully')
     } catch (error) {
-      console.error('ListingsService: Unexpected error deleting listing:', error)
       throw error;
     }
   }
@@ -222,7 +209,10 @@ export class ListingsService {
     totalCount: number;
   }> {
     try {
-      console.log('ListingsService: Searching listings:', { query, page, limit })
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        return { listings: [], hasMore: false, totalCount: 0 };
+      }
       
       const { data, error, count } = await supabase
         .from('listings')
@@ -233,14 +223,11 @@ export class ListingsService {
         .range((page - 1) * limit, page * limit - 1);
 
       if (error) {
-        console.error('ListingsService: Error searching listings:', error)
         throw error;
       }
 
       const totalCount = count || 0;
       const hasMore = totalCount > page * limit;
-
-      console.log('ListingsService: Search results:', data?.length || 0, 'Total:', totalCount)
 
       return {
         listings: data || [],
@@ -248,7 +235,6 @@ export class ListingsService {
         totalCount
       };
     } catch (error) {
-      console.error('ListingsService: Unexpected error searching listings:', error)
       throw error;
     }
   }
@@ -256,7 +242,8 @@ export class ListingsService {
   // Get all categories
   static async getCategories(): Promise<string[]> {
     try {
-      console.log('ListingsService: Getting categories...')
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return [];
       
       const { data, error } = await supabase
         .from('listings')
@@ -264,22 +251,20 @@ export class ListingsService {
         .eq('status', 'active');
 
       if (error) {
-        console.error('ListingsService: Error getting categories:', error)
         throw error;
       }
 
       const categories = [...new Set(data?.map(item => item.category) || [])];
-      console.log('ListingsService: Categories loaded:', categories.length)
       return categories;
     } catch (error) {
-      console.error('ListingsService: Unexpected error getting categories:', error)
       throw error;
     }
   }
 
   // Subscribe to real-time updates
   static subscribeToListings(callback: (listing: Listing) => void) {
-    console.log('ListingsService: Setting up real-time subscription')
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return null;
     
     const subscription = supabase
       .channel('listings')
@@ -290,7 +275,6 @@ export class ListingsService {
           table: 'listings' 
         }, 
         (payload) => {
-          console.log('ListingsService: Real-time update:', payload)
           if (payload.new) {
             callback(payload.new as Listing);
           }

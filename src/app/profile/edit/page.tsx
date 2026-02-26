@@ -12,7 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { useAuth } from '@/providers/AuthProvider';
 import { ProtectedPage } from '@/components/ProtectedPage';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
 export const dynamic = "force-dynamic";
@@ -41,10 +41,20 @@ function EditProfileContent() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        setErrors({ submit: 'Supabase is not configured.' });
+        setLoading(false);
+        return;
+      }
       
       try {
-        const { data, error } = await supabase!
+        const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
@@ -134,7 +144,13 @@ function EditProfileContent() {
     setSuccess('');
 
     try {
-      const { error } = await supabase!
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        setErrors({ submit: 'Supabase is not configured.' });
+        return;
+      }
+
+      const { error } = await supabase
         .from('profiles')
         .upsert({
           id: user?.id,

@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
 import { ProtectedPage } from '@/components/ProtectedPage';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 
 // Prevent static generation during build
 export const dynamic = "force-dynamic";
@@ -77,11 +77,17 @@ function AdminPanelContent() {
       }
 
       try {
+        const supabase = getSupabaseBrowserClient();
+        if (!supabase) {
+          setError('Supabase is not configured.');
+          return;
+        }
+
         // Fetch admin data
         const [usersData, listingsData, conversationsData] = await Promise.all([
-          supabase!.from('profiles').select('*').order('created_at', { ascending: true }),
-          supabase!.from('listings').select('*, profiles(*)').order('created_at', { ascending: false }),
-          supabase!.from('conversations').select('*').order('created_at', { ascending: false })
+          supabase.from('profiles').select('*').order('created_at', { ascending: true }),
+          supabase.from('listings').select('*, profiles(*)').order('created_at', { ascending: false }),
+          supabase.from('conversations').select('*').order('created_at', { ascending: false })
         ]);
 
         setAdminData({
@@ -107,7 +113,13 @@ function AdminPanelContent() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      await supabase!.from('profiles').delete().eq('id', userId);
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        setError('Supabase is not configured.');
+        return;
+      }
+
+      await supabase.from('profiles').delete().eq('id', userId);
       setAdminData(prev => ({
         ...prev,
         users: prev.users.filter(u => u.id !== userId)
@@ -119,7 +131,13 @@ function AdminPanelContent() {
 
   const handleDeleteListing = async (listingId: string) => {
     try {
-      await supabase!.from('listings').delete().eq('id', listingId);
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        setError('Supabase is not configured.');
+        return;
+      }
+
+      await supabase.from('listings').delete().eq('id', listingId);
       setAdminData(prev => ({
         ...prev,
         listings: prev.listings.filter(l => l.id !== listingId)

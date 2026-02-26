@@ -45,7 +45,12 @@ function ConversationContent() {
 
       // For now, allow access to authenticated users
       // TODO: Implement proper conversation participant checking when schema is updated
-      setConversation(null);
+      setConversation({
+        id: conversationId,
+        participantId: '',
+        participantName: 'Conversation',
+        createdAt: new Date().toISOString(),
+      });
       setLoading(false);
     };
 
