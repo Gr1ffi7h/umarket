@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/providers/AuthProvider';
 import { ProtectedPage } from '@/components/ProtectedPage';
 import { ConversationList } from '@/components/ConversationList';
 import { ChatInterface } from '@/components/ChatInterface';

@@ -10,7 +10,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/providers/AuthProvider';
 import { ProtectedPage } from '@/components/ProtectedPage';
 import { ListingsService } from '@/lib/listings';
 
