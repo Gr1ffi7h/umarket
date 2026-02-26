@@ -172,7 +172,7 @@ function ListingDetailContent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {listing.profiles.full_name}
+                        {listing.profiles.username || listing.profiles.email}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {listing.profiles.email}

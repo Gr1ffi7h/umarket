@@ -21,9 +21,10 @@ export interface Listing {
   status: 'active' | 'sold' | 'removed';
   profiles?: {
     id: string;
-    full_name: string;
+    username: string;
     email: string;
     avatar_url?: string;
+    role: string;
   };
 }
 
@@ -141,8 +142,21 @@ export class ListingsService {
   // Create new listing
   static async createListing(listing: Omit<Listing, 'id' | 'created_at' | 'updated_at'>): Promise<Listing> {
     try {
+      console.log('ListingsService: Creating listing with data:', {
+        title: listing.title,
+        price: listing.price,
+        category: listing.category,
+        condition: listing.condition,
+        user_id: listing.user_id,
+        images_count: listing.images?.length || 0,
+        status: listing.status
+      });
+
       const supabase = getSupabaseBrowserClient();
-      if (!supabase) throw new Error('Supabase is not configured.');
+      if (!supabase) {
+        console.error('ListingsService: Supabase client not available');
+        throw new Error('Supabase is not configured.');
+      }
       
       const { data, error } = await supabase
         .from('listings')
@@ -151,11 +165,19 @@ export class ListingsService {
         .single();
 
       if (error) {
-        throw error;
+        console.error('ListingsService: Error creating listing:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(`Failed to create listing: ${error.message}`);
       }
 
+      console.log('ListingsService: Listing created successfully:', data?.id);
       return data;
     } catch (error) {
+      console.error('ListingsService: Unexpected error in createListing:', error);
       throw error;
     }
   }
