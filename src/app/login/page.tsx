@@ -33,7 +33,7 @@ function LoginForm() {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      router.replace('/browse');
+      router.replace('/my-listings');
     }
   }, [user, authLoading, router]);
 
@@ -53,13 +53,15 @@ function LoginForm() {
     }
 
     try {
-      const { error } = await signIn(email, password);
+      const { error, session } = await signIn(email, password);
       
       if (error) {
         setError(error.message);
+      } else if (session) {
+        // Redirect to my-listings on successful login
+        router.replace('/my-listings');
       } else {
-        // Redirect to browse on successful login
-        router.replace('/browse');
+        setError('Sign in did not create a session. Please try again.');
       }
     } catch (err: any) {
       // Handle any network/fetch errors that might come through

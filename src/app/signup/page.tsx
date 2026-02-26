@@ -49,7 +49,7 @@ export default function SignUpPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !loading) {
-      router.replace('/browse');
+      router.replace('/my-listings');
     }
   }, [user, loading, router]);
 
@@ -115,16 +115,20 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const { error } = await signUp(formData.email, formData.password, {
+      const { error, session } = await signUp(formData.email, formData.password, {
         name: formData.name.trim()
       });
       
       if (error) {
         setErrors({ submit: error.message });
       } else {
-        // In most Supabase setups email confirmation is enabled.
-        // We avoid relying on immediate user state here to prevent mis-redirects.
-        router.replace('/login?message=Please check your email to verify your account');
+        // If Supabase returns a session (email confirmation disabled), go straight to my-listings.
+        if (session) {
+          router.replace('/my-listings');
+        } else {
+          // Otherwise send user to login with a friendly message.
+          router.replace('/login?message=Please check your email to verify your account');
+        }
       }
     } catch (error) {
       console.error('Signup error:', error);

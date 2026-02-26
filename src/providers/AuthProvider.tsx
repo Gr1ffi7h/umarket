@@ -21,8 +21,8 @@ export interface AuthState {
 
 export interface AuthContextType extends AuthState {
   signOut: () => Promise<void>
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
-  signUp: (email: string, password: string, metadata?: { name?: string }) => Promise<{ error: AuthError | null }>
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null; session: Session | null }>
+  signUp: (email: string, password: string, metadata?: { name?: string }) => Promise<{ error: AuthError | null; session: Session | null }>
 }
 
 // Context
@@ -146,7 +146,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const supabase = getSupabaseBrowserClient()
       if (!supabase) {
-        return { error: { message: 'Supabase is not configured.' } as AuthError }
+        return { error: { message: 'Supabase is not configured.' } as AuthError, session: null }
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -155,12 +155,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
-        return { error }
+        return { error, session: null }
       }
 
-      return { error: null }
+      // Explicitly require a session before treating as success
+      if (!data.session) {
+        return {
+          error: { message: 'Sign in did not return a session. Please verify your email or try again.' } as AuthError,
+          session: null,
+        }
+      }
+
+      // Eagerly update auth state; onAuthStateChange will also fire shortly after
+      setAuthState({
+        user: data.session.user ?? null,
+        session: data.session,
+        loading: false,
+        error: null,
+      })
+
+      return { error: null, session: data.session }
     } catch (error) {
-      return { error: { message: 'Failed to sign in' } as AuthError }
+      return { error: { message: 'Failed to sign in' } as AuthError, session: null }
     }
   }, [])
 
@@ -169,7 +185,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const supabase = getSupabaseBrowserClient()
       if (!supabase) {
-        return { error: { message: 'Supabase is not configured.' } as AuthError }
+        return { error: { message: 'Supabase is not configured.' } as AuthError, session: null }
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -181,12 +197,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
-        return { error }
+        return { error, session: null }
       }
 
-      return { error: null }
+      return { error: null, session: data.session ?? null }
     } catch (error) {
-      return { error: { message: 'Failed to sign up' } as AuthError }
+      return { error: { message: 'Failed to sign up' } as AuthError, session: null }
     }
   }, [])
 

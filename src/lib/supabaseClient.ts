@@ -1,4 +1,5 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 let cachedClient: SupabaseClient | null | undefined
 
@@ -13,7 +14,7 @@ export function getSupabaseBrowserClient(): SupabaseClient | null {
     return null
   }
 
-  cachedClient = createClient(supabaseUrl, supabaseAnonKey, {
+  cachedClient = createBrowserClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
