@@ -10,18 +10,17 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/providers/AuthProvider';
 import { ThemeToggle } from './ThemeToggle';
 
 export function Navigation() {
-  const { session, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
-  console.log('Navigation: Session state:', { session: !!session, loading });
+  console.log('Navigation: Auth state:', { user: !!user, loading });
 
   const handleProtectedNav = (e: React.MouseEvent, href: string) => {
-    if (!session) {
+    if (!user) {
       e.preventDefault();
       router.push(`/login?returnTo=${encodeURIComponent(href)}`);
     }
@@ -29,7 +28,7 @@ export function Navigation() {
 
   const handleLogout = async () => {
     console.log('Navigation: Logging out...');
-    await supabase.auth.signOut();
+    await signOut();
     router.push('/');
   };
 
@@ -104,7 +103,7 @@ export function Navigation() {
                 </Link>
               </div>
 
-              {session ? (
+              {user ? (
                 <div className="flex items-center space-x-4">
                   <Link
                     href="/my-listings"

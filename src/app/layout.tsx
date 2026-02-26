@@ -12,7 +12,7 @@ import '../styles/globals.css';
 import { Navigation } from '@/components/Navigation-supabase';
 import { MobileBottomNav } from '@/components/MobileBottomNav-supabase';
 import { GlobalErrorLogger } from '@/components/GlobalErrorLogger';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '@/providers/AuthProvider';
 
 // Optimize font loading
 const inter = Inter({

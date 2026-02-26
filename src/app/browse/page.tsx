@@ -10,8 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
-import { useAuth } from '@/context/AuthContext';
-import { ProtectedPage } from '@/components/ProtectedPage';
+import { useAuth } from '@/providers/AuthProvider';
 import { ListingsService, Listing } from '@/lib/listings';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -122,10 +121,11 @@ function BrowsePage() {
   const categories = ['All', 'Electronics', 'Books', 'Furniture', 'Clothing', 'Appliances'];
   const limit = 20;
 
+  // Load listings only when auth is resolved
   useEffect(() => {
+    if (authLoading) return; // Don't load until auth is resolved
+    
     const loadListings = async () => {
-      if (authLoading) return; // Don't load until auth is resolved
-      
       try {
         console.log('BrowsePage: Loading listings...')
         setLoading(true);
@@ -148,7 +148,7 @@ function BrowsePage() {
     };
 
     loadListings();
-  }, [page, selectedCategory, authLoading]);
+  }, [page, selectedCategory, authLoading]); // Removed user dependency to prevent re-renders
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,24 +181,23 @@ function BrowsePage() {
   }
 
   return (
-    <ProtectedPage>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Search Bar */}
-          <div className="mb-8">
-            <form onSubmit={handleSearch} className="flex gap-4">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for items..."
-                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <Button type="submit" disabled={!searchQuery.trim()}>
-                Search
-              </Button>
-            </form>
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Search Bar */}
+        <div className="mb-8">
+          <form onSubmit={handleSearch} className="flex gap-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for items..."
+              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <Button type="submit" disabled={!searchQuery.trim()}>
+              Search
+            </Button>
+          </form>
+        </div>
 
           {/* Featured Section */}
           <FeaturedSection />
@@ -286,8 +285,7 @@ function BrowsePage() {
           </div>
         </div>
       </div>
-    </ProtectedPage>
-  );
-}
+    );
+  }
 
 export default BrowsePage;

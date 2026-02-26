@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/providers/AuthProvider';
 import { 
   Home, 
   PlusCircle, 
@@ -20,11 +20,11 @@ import {
 } from 'lucide-react';
 
 export function MobileBottomNav() {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   const handleProtectedNav = (e: React.MouseEvent, href: string) => {
-    if (!session) {
+    if (!user) {
       e.preventDefault();
       router.push(`/login?returnTo=${encodeURIComponent(href)}`);
     }
@@ -68,7 +68,7 @@ export function MobileBottomNav() {
         </Link>
 
         {/* Profile */}
-        {session ? (
+        {user ? (
           <Link
             href="/profile"
             className="flex flex-col items-center py-2 px-3 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors active:scale-95 duration-150"

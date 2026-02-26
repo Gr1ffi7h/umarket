@@ -12,8 +12,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClientHeader } from '@/components/ClientHeader';
 import { Button } from '@/components/Button';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/providers/AuthProvider';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
@@ -25,22 +24,22 @@ function SearchParamsWrapper({ children }: { children: React.ReactNode }) {
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { session } = useAuth();
+  const { signIn, user, loading: authLoading } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
-    if (session) {
+    if (user && !authLoading) {
       router.replace('/browse');
     }
-  }, [session, router]);
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setError('');
 
     // Client-side validation
@@ -49,15 +48,12 @@ function LoginForm() {
     
     if (passwordTrimmed.length < MIN_PASSWORD_LENGTH) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
-      setLoading(false);
+      setIsSubmitting(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase!.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
-      });
+      const { error } = await signIn(email, password);
       
       if (error) {
         setError(error.message);
@@ -73,7 +69,7 @@ function LoginForm() {
         setError('An unexpected error occurred');
       }
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -148,9 +144,9 @@ function LoginForm() {
         variant="primary"
         size="lg"
         className="w-full py-3 active:scale-95 transition-transform duration-150"
-        disabled={loading || password.trim().length < MIN_PASSWORD_LENGTH || !email.trim()}
+        disabled={isSubmitting || password.trim().length < MIN_PASSWORD_LENGTH || !email.trim()}
       >
-        {loading ? 'Signing in...' : 'Sign In'}
+        {isSubmitting ? 'Signing in...' : 'Sign In'}
       </Button>
     </form>
   );

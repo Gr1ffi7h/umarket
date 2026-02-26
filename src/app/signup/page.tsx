@@ -13,8 +13,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/providers/AuthProvider';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8; // Match Supabase minimum
@@ -46,7 +45,7 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
-  const { session } = useAuth();
+  const { signUp, user, loading } = useAuth();
 
   React.useEffect(() => {
     setMounted(true);
@@ -54,10 +53,10 @@ export default function SignUpPage() {
 
   // Redirect if already logged in
   React.useEffect(() => {
-    if (session) {
+    if (user && !loading) {
       router.replace('/browse');
     }
-  }, [session, router]);
+  }, [user, loading, router]);
 
   /**
    * Handle form input changes
@@ -121,30 +120,23 @@ export default function SignUpPage() {
     setErrors({});
 
     try {
-      const { data, error } = await supabase!.auth.signUp({
-        email: formData.email.trim(),
-        password: formData.password.trim(),
-        options: {
-          data: {
-            name: formData.name.trim(),
-          }
-        }
+      const { error } = await signUp(formData.email, formData.password, {
+        name: formData.name.trim()
       });
       
       if (error) {
         setErrors({ submit: error.message });
       } else {
-        // Wait for session to be established after signup
-        console.log('SignupPage: Signup successful, waiting for session...');
+        // Wait for user state to update after successful signup
+        console.log('SignupPage: Signup successful, waiting for user state...');
         
-        // Give Supabase a moment to establish the session
-        setTimeout(async () => {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            console.log('SignupPage: Session established, redirecting to browse');
+        // Give AuthProvider a moment to update the user state
+        setTimeout(() => {
+          if (user) {
+            console.log('SignupPage: User established, redirecting to browse');
             router.replace('/browse');
           } else {
-            console.log('SignupPage: No session, redirecting to login');
+            console.log('SignupPage: No user state, redirecting to login');
             router.replace('/login?message=Please check your email to verify your account');
           }
         }, 1000);

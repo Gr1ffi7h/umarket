@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/providers/AuthProvider';
 
 export const dynamic = "force-dynamic";
 
