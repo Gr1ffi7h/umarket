@@ -134,8 +134,20 @@ export default function SignUpPage() {
       if (error) {
         setErrors({ submit: error.message });
       } else {
-        // Auto-login after successful signup and redirect to browse
-        router.replace('/browse');
+        // Wait for session to be established after signup
+        console.log('SignupPage: Signup successful, waiting for session...');
+        
+        // Give Supabase a moment to establish the session
+        setTimeout(async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log('SignupPage: Session established, redirecting to browse');
+            router.replace('/browse');
+          } else {
+            console.log('SignupPage: No session, redirecting to login');
+            router.replace('/login?message=Please check your email to verify your account');
+          }
+        }, 1000);
       }
     } catch (error) {
       console.error('Signup error:', error);

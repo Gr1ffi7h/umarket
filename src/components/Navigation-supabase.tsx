@@ -18,6 +18,8 @@ export function Navigation() {
   const { session, loading } = useAuth();
   const router = useRouter();
 
+  console.log('Navigation: Session state:', { session: !!session, loading });
+
   const handleProtectedNav = (e: React.MouseEvent, href: string) => {
     if (!session) {
       e.preventDefault();
@@ -26,7 +28,8 @@ export function Navigation() {
   };
 
   const handleLogout = async () => {
-    await supabase!.auth.signOut();
+    console.log('Navigation: Logging out...');
+    await supabase.auth.signOut();
     router.push('/');
   };
 
